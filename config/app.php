@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'apartment_default_room_count' => (int) env('APARTMENT_DEFAULT_ROOM_COUNT', 15),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

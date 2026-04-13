@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1400" viewBox="0 0 900 1400" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="450" y1="0" x2="450" y2="1400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d7ddef"/>
+      <stop offset="1" stop-color="#f1f4fb"/>
+    </linearGradient>
+    <linearGradient id="wall" x1="30" y1="140" x2="790" y2="1300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c4cbd3"/>
+      <stop offset="1" stop-color="#a5afb9"/>
+    </linearGradient>
+    <linearGradient id="roof" x1="250" y1="120" x2="870" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5c636e"/>
+      <stop offset="1" stop-color="#3f444c"/>
+    </linearGradient>
+    <linearGradient id="plant" x1="610" y1="1000" x2="760" y2="1260" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6b9253"/>
+      <stop offset="1" stop-color="#32573a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="900" height="1400" fill="url(#sky)"/>
+
+  <polygon points="220,130 880,60 900,140 240,210" fill="url(#roof)"/>
+
+  <rect x="60" y="160" width="750" height="1150" rx="8" fill="url(#wall)"/>
+
+  <rect x="90" y="250" width="670" height="70" fill="#7f8a95"/>
+  <rect x="90" y="500" width="670" height="70" fill="#7f8a95"/>
+  <rect x="90" y="750" width="670" height="70" fill="#7f8a95"/>
+  <rect x="90" y="1000" width="670" height="70" fill="#7f8a95"/>
+
+  <g stroke="#252b31" stroke-width="8" opacity="0.85">
+    <line x1="90" y1="345" x2="760" y2="345"/>
+    <line x1="90" y1="375" x2="760" y2="375"/>
+    <line x1="90" y1="595" x2="760" y2="595"/>
+    <line x1="90" y1="625" x2="760" y2="625"/>
+    <line x1="90" y1="845" x2="760" y2="845"/>
+    <line x1="90" y1="875" x2="760" y2="875"/>
+    <line x1="90" y1="1095" x2="760" y2="1095"/>
+    <line x1="90" y1="1125" x2="760" y2="1125"/>
+  </g>
+
+  <g stroke="#293038" stroke-width="7" opacity="0.8">
+    <line x1="140" y1="320" x2="140" y2="385"/>
+    <line x1="220" y1="320" x2="220" y2="385"/>
+    <line x1="300" y1="320" x2="300" y2="385"/>
+    <line x1="380" y1="320" x2="380" y2="385"/>
+    <line x1="460" y1="320" x2="460" y2="385"/>
+    <line x1="540" y1="320" x2="540" y2="385"/>
+    <line x1="620" y1="320" x2="620" y2="385"/>
+    <line x1="700" y1="320" x2="700" y2="385"/>
+
+    <line x1="140" y1="570" x2="140" y2="635"/>
+    <line x1="220" y1="570" x2="220" y2="635"/>
+    <line x1="300" y1="570" x2="300" y2="635"/>
+    <line x1="380" y1="570" x2="380" y2="635"/>
+    <line x1="460" y1="570" x2="460" y2="635"/>
+    <line x1="540" y1="570" x2="540" y2="635"/>
+    <line x1="620" y1="570" x2="620" y2="635"/>
+    <line x1="700" y1="570" x2="700" y2="635"/>
+
+    <line x1="140" y1="820" x2="140" y2="885"/>
+    <line x1="220" y1="820" x2="220" y2="885"/>
+    <line x1="300" y1="820" x2="300" y2="885"/>
+    <line x1="380" y1="820" x2="380" y2="885"/>
+    <line x1="460" y1="820" x2="460" y2="885"/>
+    <line x1="540" y1="820" x2="540" y2="885"/>
+    <line x1="620" y1="820" x2="620" y2="885"/>
+    <line x1="700" y1="820" x2="700" y2="885"/>
+  </g>
+
+  <g fill="#f4f6f9" stroke="#8a939d" stroke-width="3" opacity="0.95">
+    <rect x="95" y="330" width="75" height="50" rx="6"/>
+    <rect x="95" y="580" width="75" height="50" rx="6"/>
+    <rect x="95" y="830" width="75" height="50" rx="6"/>
+    <rect x="95" y="1080" width="75" height="50" rx="6"/>
+  </g>
+
+  <g fill="#2f5138" opacity="0.85">
+    <ellipse cx="675" cy="1210" rx="80" ry="55"/>
+    <ellipse cx="730" cy="1160" rx="70" ry="45"/>
+    <ellipse cx="635" cy="1140" rx="65" ry="42"/>
+  </g>
+
+  <g fill="url(#plant)">
+    <path d="M650 1260 C660 1160, 700 1080, 725 1000" stroke="#3f6f48" stroke-width="7" fill="none"/>
+    <path d="M700 1220 C710 1140, 735 1070, 760 1010" stroke="#3f6f48" stroke-width="6" fill="none"/>
+    <path d="M610 1240 C625 1160, 645 1100, 665 1040" stroke="#3f6f48" stroke-width="6" fill="none"/>
+  </g>
+</svg>

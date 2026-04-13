@@ -2,14 +2,15 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Calendar,
     LayoutDashboard,
+    LogOut,
     MessageSquare,
     ReceiptText,
     Settings,
-    User,
     Users,
     Wrench,
 } from 'lucide-react';
 import type { ComponentType, PropsWithChildren } from 'react';
+import { logout } from '@/routes';
 
 type NavItem = {
     label: string;
@@ -31,98 +32,123 @@ export default function ApartmentLayout({
     children,
     title,
 }: PropsWithChildren<{ title: string }>) {
-    const { url } = usePage();
+    const { url, props } = usePage<{
+        auth?: {
+            user?: {
+                name?: string;
+            };
+        };
+    }>();
+
+    const currentUser = props.auth?.user?.name ?? 'Admin';
 
     return (
-        <div className="min-h-screen overflow-x-hidden bg-[#efede7] text-slate-900">
-            <aside className="fixed inset-y-0 left-0 hidden w-[280px] bg-[#284f61] text-white lg:block">
-                <div className="border-b border-white/10 px-6 py-7">
-                    <p className="text-3xl font-extrabold uppercase tracking-tight">
-                        The Sammie's
-                    </p>
-                    <p className="text-3xl font-extrabold uppercase tracking-tight">
-                        Apartment
-                    </p>
-                </div>
+        <div className="min-h-screen overflow-x-hidden bg-[#191a1f] text-[#223645]">
+            <div className="min-h-screen w-full overflow-hidden bg-[#ece8d8] shadow-[0_24px_48px_rgba(0,0,0,0.3)]">
+                <div className="flex min-h-screen">
+                    <aside className="hidden w-[220px] shrink-0 bg-[#1B3C53] text-[#c8d7e2] lg:flex lg:flex-col">
+                        <div className="px-5 pb-4 pt-7">
+                            <p className="text-[22px] font-bold uppercase leading-7 tracking-tight text-[#dceaf2]">
+                                The Sammie's
+                            </p>
+                            <p className="text-[22px] font-bold uppercase leading-7 tracking-tight text-[#dceaf2]">
+                                Apartment
+                            </p>
 
-                <nav className="space-y-2 px-4 py-4">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive =
-                            url === item.href ||
-                            (item.href !== '/dashboard' &&
-                                url.startsWith(item.href));
+                            <div className="mt-5 rounded-md bg-white/8 px-3 py-2">
+                                <p className="text-[10px] uppercase tracking-wide text-[#98b4c7]">
+                                    Signed in as
+                                </p>
+                                <p className="truncate text-sm font-semibold text-white">
+                                    {currentUser}
+                                </p>
 
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-lg font-semibold transition ${
-                                    isActive
-                                        ? 'bg-[#406273] text-white'
-                                        : 'text-white/85 hover:bg-[#355a6a] hover:text-white'
-                                }`}
-                            >
-                                <Icon className="h-6 w-6" />
-                                <span>{item.label}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                <div className="absolute inset-x-0 bottom-4 px-4">
-                    <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-white/90">
-                        <div className="grid h-9 w-9 place-items-center rounded-full bg-white/15">
-                            <User className="h-5 w-5" />
-                        </div>
-                        <p className="text-base font-semibold">Walton</p>
-                    </div>
-                </div>
-            </aside>
-
-            <main className="w-full lg:pl-[280px]">
-                <div className="border-b border-black/10 bg-[#284f61] px-4 py-3 text-white lg:hidden">
-                    <p className="text-lg font-bold uppercase tracking-tight">
-                        The Sammie's Apartment
-                    </p>
-                    <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-                        {navItems.map((item) => {
-                            const isActive =
-                                url === item.href ||
-                                (item.href !== '/dashboard' &&
-                                    url.startsWith(item.href));
-
-                            return (
                                 <Link
-                                    key={`mobile-${item.href}`}
-                                    href={item.href}
-                                    className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold ${
-                                        isActive
-                                            ? 'bg-[#406273] text-white'
-                                            : 'bg-[#355a6a] text-white/85'
-                                    }`}
+                                    href={logout()}
+                                    as="button"
+                                    className="mt-2 inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 text-[10px] font-semibold text-[#dceaf2] hover:bg-white/20"
                                 >
-                                    {item.label}
+                                    <LogOut className="h-3 w-3" />
+                                    Log out
                                 </Link>
-                            );
-                        })}
-                    </div>
-                </div>
+                            </div>
+                        </div>
 
-                <div className="p-4 lg:p-10">
-                    <h1 className="mb-6 text-4xl font-bold uppercase tracking-tight lg:mb-8 lg:text-5xl">
-                        {title}
-                    </h1>
-                    {children}
-                </div>
-            </main>
+                        <nav className="apartment-scrollbar flex-1 space-y-1 overflow-y-auto px-3 pb-6 pt-1">
+                            {navItems.map((item) => {
+                                const Icon = item.icon;
+                                const isActive =
+                                    url === item.href ||
+                                    (item.href !== '/dashboard' &&
+                                        url.startsWith(item.href));
 
-            <button
-                type="button"
-                className="fixed bottom-6 right-6 grid h-11 w-11 place-items-center rounded-full bg-black/85 text-white"
-            >
-                ?
-            </button>
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={`flex items-center gap-2 rounded-md px-3 py-2 text-[11px] font-semibold transition ${
+                                            isActive
+                                                ? 'bg-[#5c7f96] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]'
+                                                : 'text-[#d4e1ea] hover:bg-[#3d6279] hover:text-white'
+                                        }`}
+                                    >
+                                        <Icon className="h-3.5 w-3.5" />
+                                        <span>{item.label}</span>
+                                    </Link>
+                                );
+                            })}
+                        </nav>
+
+                    </aside>
+
+                    <main className="min-w-0 flex-1">
+                        <div className="border-b border-black/10 bg-[#1B3C53] px-4 py-3 text-white lg:hidden">
+                            <div className="flex items-center justify-between gap-3">
+                                <p className="text-base font-bold uppercase tracking-tight">
+                                    The Sammie's Apartment
+                                </p>
+                                <Link
+                                    href={logout()}
+                                    as="button"
+                                    className="inline-flex items-center gap-1 rounded-md bg-[#3d6279] px-2 py-1 text-[10px] font-semibold text-[#d9e6ef]"
+                                >
+                                    <LogOut className="h-3 w-3" />
+                                    Log out
+                                </Link>
+                            </div>
+                            <div className="apartment-scrollbar mt-3 flex gap-2 overflow-x-auto pb-1">
+                                {navItems.map((item) => {
+                                    const isActive =
+                                        url === item.href ||
+                                        (item.href !== '/dashboard' &&
+                                            url.startsWith(item.href));
+
+                                    return (
+                                        <Link
+                                            key={`mobile-${item.href}`}
+                                            href={item.href}
+                                            className={`whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-semibold ${
+                                                isActive
+                                                    ? 'bg-[#5c7f96] text-white'
+                                                    : 'bg-[#3d6279] text-[#d9e6ef]'
+                                            }`}
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                            <h1 className="apartment-page-title mb-5 text-[#0f1c3a] lg:mb-6">
+                                {title}
+                            </h1>
+                            {children}
+                        </div>
+                    </main>
+                </div>
+            </div>
         </div>
     );
 }

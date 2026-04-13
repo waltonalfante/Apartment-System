@@ -11,23 +11,28 @@ import { login } from '@/routes';
 import { store } from '@/routes/register';
 
 export default function Register() {
+    const authInputClassName =
+        'auth-input h-9 border-[#b9b7ad] bg-[#f7f6f2] text-xs text-[#223848] caret-[#223848] placeholder:text-[#97a2ab] focus-visible:border-[#7d93a4] focus-visible:ring-[2px] focus-visible:ring-[#5f7f95]/25';
+
     return (
         <AuthLayout
             title="Create an account"
-            description="Enter your details below to create your account"
+            description="Fill up the form to continue"
         >
             <Head title="Register" />
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
-                className="flex flex-col gap-6"
+                className="flex flex-col gap-3"
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                        <div className="grid gap-3">
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="name" className="text-xs text-[#4f6271]">
+                                    Name
+                                </Label>
                                 <Input
                                     id="name"
                                     type="text"
@@ -36,16 +41,19 @@ export default function Register() {
                                     tabIndex={1}
                                     autoComplete="name"
                                     name="name"
-                                    placeholder="Full name"
+                                    placeholder="Name"
+                                    className={authInputClassName}
                                 />
                                 <InputError
                                     message={errors.name}
-                                    className="mt-2"
+                                    className="mt-1"
                                 />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="email" className="text-xs text-[#4f6271]">
+                                    Email
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -53,35 +61,56 @@ export default function Register() {
                                     tabIndex={2}
                                     autoComplete="email"
                                     name="email"
-                                    placeholder="email@example.com"
+                                    placeholder="Email"
+                                    className={authInputClassName}
                                 />
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password">Password</Label>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="contact_number" className="text-xs text-[#4f6271]">
+                                    Contact Number
+                                </Label>
+                                <Input
+                                    id="contact_number"
+                                    type="text"
+                                    tabIndex={3}
+                                    placeholder="Contact Number"
+                                    className={authInputClassName}
+                                />
+                            </div>
+
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="password" className="text-xs text-[#4f6271]">
+                                    Password
+                                </Label>
                                 <PasswordInput
                                     id="password"
                                     required
-                                    tabIndex={3}
+                                    tabIndex={4}
                                     autoComplete="new-password"
                                     name="password"
                                     placeholder="Password"
+                                    className={authInputClassName}
                                 />
                                 <InputError message={errors.password} />
                             </div>
 
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
+                            <div className="grid gap-1.5">
+                                <Label
+                                    htmlFor="password_confirmation"
+                                    className="text-xs text-[#4f6271]"
+                                >
                                     Confirm password
                                 </Label>
                                 <PasswordInput
                                     id="password_confirmation"
                                     required
-                                    tabIndex={4}
+                                    tabIndex={5}
                                     autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Confirm password"
+                                    className={authInputClassName}
                                 />
                                 <InputError
                                     message={errors.password_confirmation}
@@ -90,19 +119,19 @@ export default function Register() {
 
                             <Button
                                 type="submit"
-                                className="mt-2 w-full"
-                                tabIndex={5}
+                                className="mt-1 h-9 w-full bg-[#5f7f95] text-xs font-semibold text-white hover:bg-[#4f7088]"
+                                tabIndex={6}
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
-                                Create account
+                                Create Account
                             </Button>
                         </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
+                        <div className="text-center text-[11px] text-[#657784]">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={6}>
-                                Log in
+                            <TextLink href={login()} tabIndex={7} className="text-[#5f7f95]">
+                                Login here
                             </TextLink>
                         </div>
                     </>

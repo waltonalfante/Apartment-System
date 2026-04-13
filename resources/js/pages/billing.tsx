@@ -61,7 +61,7 @@ const bills: Bill[] = [
     },
     {
         room: 'Room 14',
-        tenant: 'Carlos Bautista',
+        tenant: 'Sonca Claus',
         monthYear: 'March 2026',
         rent: 'P 6,000',
         electricity: 'P 780',
@@ -72,7 +72,7 @@ const bills: Bill[] = [
     },
     {
         room: 'Room 15',
-        tenant: 'Martina Garcia',
+        tenant: 'Scienta Claus',
         monthYear: 'March 2026',
         rent: 'P 6,000',
         electricity: 'P 820',
@@ -84,9 +84,9 @@ const bills: Bill[] = [
 ];
 
 const statusStyles: Record<Bill['status'], string> = {
-    Paid: 'bg-[#0bbf4b] text-white',
-    Pending: 'bg-[#e6ab00] text-white',
-    Overdue: 'bg-[#ff2a3b] text-white',
+    Paid: 'bg-[#2ca94e] text-white',
+    Pending: 'bg-[#f0b01f] text-[#312400]',
+    Overdue: 'bg-[#ef4242] text-white',
 };
 
 const parseAmount = (amount: string) => Number(amount.replace(/[^\d]/g, ''));
@@ -95,28 +95,41 @@ const toPeso = (value: number) => `P ${value.toLocaleString()}`;
 
 export default function Billing() {
     const [activeFilter, setActiveFilter] = useState<'All' | Bill['status']>('All');
+    const [billList, setBillList] = useState<Bill[]>(bills);
     const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+    const [notice, setNotice] = useState('');
+    const [isAddPayeeOpen, setIsAddPayeeOpen] = useState(false);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [newPayee, setNewPayee] = useState({
+        tenant: '',
+        room: '',
+        monthYear: 'April 2026',
+        rent: '6000',
+        electricity: '0',
+        water: '0',
+        dueDate: 'Apr 10, 2026',
+    });
 
     const filteredBills = useMemo(
         () =>
             activeFilter === 'All'
-                ? bills
-                : bills.filter((bill) => bill.status === activeFilter),
-        [activeFilter],
+                ? billList
+                : billList.filter((bill) => bill.status === activeFilter),
+        [activeFilter, billList],
     );
 
     const totals = useMemo(() => {
-        const totalRevenue = bills.reduce(
+        const totalRevenue = billList.reduce(
             (sum, bill) => sum + parseAmount(bill.total),
             0,
         );
-        const collected = bills
+        const collected = billList
             .filter((bill) => bill.status === 'Paid')
             .reduce((sum, bill) => sum + parseAmount(bill.total), 0);
-        const pending = bills
+        const pending = billList
             .filter((bill) => bill.status === 'Pending')
             .reduce((sum, bill) => sum + parseAmount(bill.total), 0);
-        const overdue = bills
+        const overdue = billList
             .filter((bill) => bill.status === 'Overdue')
             .reduce((sum, bill) => sum + parseAmount(bill.total), 0);
 
@@ -126,145 +139,262 @@ export default function Billing() {
             pending,
             overdue,
         };
-    }, []);
+    }, [billList]);
+
+    const cycleBillStatus = (targetBill: Bill) => {
+        const nextStatus: Bill['status'] =
+            targetBill.status === 'Pending'
+                ? 'Paid'
+                : targetBill.status === 'Paid'
+                  ? 'Overdue'
+                  : 'Pending';
+
+        setBillList((currentBills) =>
+            currentBills.map((bill) =>
+                bill.room === targetBill.room && bill.tenant === targetBill.tenant
+                    ? { ...bill, status: nextStatus }
+                    : bill,
+            ),
+        );
+        setNotice(`Status updated for ${targetBill.tenant}: ${nextStatus}.`);
+    };
+
+    const sendReminder = (targetBill: Bill) => {
+        setNotice(`Reminder sent to ${targetBill.tenant} (${targetBill.room}).`);
+    };
+
+    const addPayee = () => {
+        if (newPayee.tenant.trim().length < 3 || newPayee.room.trim().length < 1) {
+            setNotice('Please complete tenant and unit details before adding payee.');
+            return;
+        }
+
+        const rentValue = Number(newPayee.rent) || 0;
+        const electricityValue = Number(newPayee.electricity) || 0;
+        const waterValue = Number(newPayee.water) || 0;
+        const totalValue = rentValue + electricityValue + waterValue;
+
+        const billToAdd: Bill = {
+            room: `Room ${newPayee.room.trim()}`,
+            tenant: newPayee.tenant.trim(),
+            monthYear: newPayee.monthYear,
+            rent: `P ${rentValue.toLocaleString()}`,
+            electricity: `P ${electricityValue.toLocaleString()}`,
+            water: `P ${waterValue.toLocaleString()}`,
+            total: `P ${totalValue.toLocaleString()}`,
+            status: 'Pending',
+            dueDate: newPayee.dueDate,
+        };
+
+        setBillList((currentBills) => [...currentBills, billToAdd]);
+        setNotice(`New payee added for ${billToAdd.tenant}.`);
+        setIsAddPayeeOpen(false);
+    };
+
+    const historyBills = useMemo(
+        () => billList.filter((bill) => bill.status === 'Paid'),
+        [billList],
+    );
 
     return (
         <ApartmentLayout title="Billing and Finance">
             <Head title="Billing" />
 
-            <section className="min-w-0 space-y-6 rounded-2xl bg-white px-7 py-6 shadow-sm">
-                <div className="flex flex-wrap gap-3 text-base font-semibold">
-                    <button
-                        type="button"
-                        onClick={() => setActiveFilter('All')}
-                        className={`rounded-xl px-4 py-2 ${
-                            activeFilter === 'All'
-                                ? 'bg-[#56798b] text-white'
-                                : 'border border-black/15 text-slate-800'
-                        }`}
-                    >
-                        All Bills
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveFilter('Paid')}
-                        className={`rounded-xl px-4 py-2 ${
-                            activeFilter === 'Paid'
-                                ? 'bg-[#56798b] text-white'
-                                : 'border border-black/15 text-slate-800'
-                        }`}
-                    >
-                        Paid
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveFilter('Pending')}
-                        className={`rounded-xl px-4 py-2 ${
-                            activeFilter === 'Pending'
-                                ? 'bg-[#56798b] text-white'
-                                : 'border border-black/15 text-slate-800'
-                        }`}
-                    >
-                        Pending
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveFilter('Overdue')}
-                        className={`rounded-xl px-4 py-2 ${
-                            activeFilter === 'Overdue'
-                                ? 'bg-[#56798b] text-white'
-                                : 'border border-black/15 text-slate-800'
-                        }`}
-                    >
-                        Overdue
-                    </button>
+            {notice ? (
+                <div className="mb-4 rounded-md bg-[#2ca94e] px-3 py-2 text-xs font-semibold text-white">
+                    {notice}
+                </div>
+            ) : null}
+
+            <section className="min-w-0 space-y-4 rounded-md border border-[#b79f93] bg-white/75 p-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <article className="rounded-md border border-[#d8cdc3] bg-white px-3 py-2">
+                        <p className="text-[10px] text-[#6e7c88]">Total Payment Collected</p>
+                        <p className="text-lg font-semibold text-[#2c475a]">P42,000.00</p>
+                        <p className="text-[10px] text-[#8a96a0]">This Month</p>
+                    </article>
+                    <article className="rounded-md border border-[#d8cdc3] bg-white px-3 py-2">
+                        <p className="text-[10px] text-[#6e7c88]">Outstanding Balance</p>
+                        <p className="text-lg font-semibold text-[#2c475a]">P15,000</p>
+                        <p className="text-[10px] text-[#8a96a0]">Current</p>
+                    </article>
+                    <article className="rounded-md border border-[#d8cdc3] bg-white px-3 py-2">
+                        <p className="text-[10px] text-[#6e7c88]">Overdue Tenant</p>
+                        <p className="text-lg font-semibold text-[#2c475a]">1</p>
+                        <p className="text-[10px] text-[#8a96a0]">Accounts</p>
+                    </article>
+                    <article className="rounded-md border border-[#d8cdc3] bg-white px-3 py-2">
+                        <p className="text-[10px] text-[#6e7c88]">Collection Rates</p>
+                        <p className="text-lg font-semibold text-[#2c475a]">43.5%</p>
+                        <p className="text-[10px] text-[#8a96a0]">This Month</p>
+                    </article>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[920px] border-collapse text-left text-base">
-                        <thead>
-                            <tr className="border-b border-black/10 text-slate-900">
-                                <th className="py-3 font-semibold">Room</th>
-                                <th className="py-3 font-semibold">Tenant</th>
-                                <th className="py-3 font-semibold">Month/Year</th>
-                                <th className="py-3 font-semibold">Rent</th>
-                                <th className="py-3 font-semibold">Electricity</th>
-                                <th className="py-3 font-semibold">Water</th>
-                                <th className="py-3 font-semibold">Total</th>
-                                <th className="py-3 font-semibold">Status</th>
-                                <th className="py-3 font-semibold">Due Date</th>
-                                <th className="py-3 font-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredBills.map((bill) => (
-                                <tr
-                                    key={bill.room}
-                                    className="border-b border-black/10 text-slate-800"
-                                >
-                                    <td className="py-4">{bill.room}</td>
-                                    <td className="py-4">{bill.tenant}</td>
-                                    <td className="py-4">{bill.monthYear}</td>
-                                    <td className="py-4">{bill.rent}</td>
-                                    <td className="py-4">{bill.electricity}</td>
-                                    <td className="py-4">{bill.water}</td>
-                                    <td className="py-4">{bill.total}</td>
-                                    <td className="py-4">
-                                        <span
-                                            className={`rounded-xl px-3 py-1 text-sm font-semibold ${statusStyles[bill.status]}`}
-                                        >
-                                            {bill.status}
-                                        </span>
-                                    </td>
-                                    <td className="py-4">{bill.dueDate}</td>
-                                    <td className="py-4">
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedBill(bill)}
-                                            className="rounded-xl border border-black/15 px-4 py-2 font-semibold"
-                                        >
-                                            View
-                                        </button>
-                                    </td>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <article className="rounded-md border border-[#d8cdc3] bg-white px-3 py-2">
+                        <p className="text-[10px] text-[#6e7c88]">Gross Revenue</p>
+                        <p className="text-lg font-semibold text-[#2c475a]">{toPeso(totals.totalRevenue)}</p>
+                    </article>
+                    <article className="rounded-md border border-[#d8cdc3] bg-white px-3 py-2">
+                        <p className="text-[10px] text-[#6e7c88]">Collected</p>
+                        <p className="text-lg font-semibold text-[#2ca94e]">{toPeso(totals.collected)}</p>
+                    </article>
+                    <article className="rounded-md border border-[#d8cdc3] bg-white px-3 py-2">
+                        <p className="text-[10px] text-[#6e7c88]">Pending</p>
+                        <p className="text-lg font-semibold text-[#c68f16]">{toPeso(totals.pending)}</p>
+                    </article>
+                    <article className="rounded-md border border-[#d8cdc3] bg-white px-3 py-2">
+                        <p className="text-[10px] text-[#6e7c88]">Overdue</p>
+                        <p className="text-lg font-semibold text-[#ef4242]">{toPeso(totals.overdue)}</p>
+                    </article>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-2 text-xs font-semibold">
+                        {(['All', 'Paid', 'Pending', 'Overdue'] as const).map((filter) => (
+                            <button
+                                key={filter}
+                                type="button"
+                                onClick={() => setActiveFilter(filter)}
+                                className={`rounded-md px-3 py-1.5 ${
+                                    activeFilter === filter
+                                        ? 'bg-[#5f7f95] text-white'
+                                        : 'border border-[#c9bbb0] bg-white text-[#3f5667]'
+                                }`}
+                            >
+                                {filter}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onClick={() => setIsAddPayeeOpen(true)}
+                            className="rounded-md bg-[#5f7f95] px-6 py-2 text-xs font-semibold text-white"
+                        >
+                            Add Payee
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsHistoryOpen((current) => !current)}
+                            className="rounded-md bg-[#5f7f95] px-6 py-2 text-xs font-semibold text-white"
+                        >
+                            View History
+                        </button>
+                    </div>
+                </div>
+
+                <div className="overflow-hidden rounded-md border border-[#b79f93] bg-white">
+                    <div className="apartment-scrollbar max-h-[380px] overflow-auto">
+                        <table className="w-full min-w-[980px] border-collapse text-left text-xs">
+                            <thead className="sticky top-0 z-10 bg-[#f5f3eb]">
+                                <tr className="border-b border-[#ddd3c8] text-[#677482]">
+                                    <th className="px-3 py-2 font-semibold">Tenant Name</th>
+                                    <th className="px-3 py-2 font-semibold">Unit #</th>
+                                    <th className="px-3 py-2 font-semibold">Amount Due</th>
+                                    <th className="px-3 py-2 font-semibold">Due Date</th>
+                                    <th className="px-3 py-2 font-semibold">Status</th>
+                                    <th className="px-3 py-2 text-right font-semibold">Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filteredBills.map((bill) => (
+                                    <tr
+                                        key={`${bill.room}-${bill.tenant}`}
+                                        className="border-b border-[#eee6e0] text-[#3e5262]"
+                                    >
+                                        <td className="px-3 py-2">{bill.tenant}</td>
+                                        <td className="px-3 py-2">{bill.room.replace('Room ', '')}</td>
+                                        <td className="px-3 py-2">{bill.total}</td>
+                                        <td className="px-3 py-2">{bill.dueDate}</td>
+                                        <td className="px-3 py-2">
+                                            <span
+                                                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusStyles[bill.status]}`}
+                                            >
+                                                {bill.status === 'Pending'
+                                                    ? 'Unpaid'
+                                                    : bill.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-3 py-2 text-right">
+                                            <div className="flex flex-wrap justify-end gap-1 sm:flex-nowrap">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedBill(bill)}
+                                                    className="whitespace-nowrap rounded-md bg-[#5f7f95] px-2 py-1 text-[10px] font-semibold text-white"
+                                                >
+                                                    View
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => cycleBillStatus(bill)}
+                                                    className="whitespace-nowrap rounded-md bg-[#f0b01f] px-2 py-1 text-[10px] font-semibold text-[#312400]"
+                                                >
+                                                    Change Status
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => sendReminder(bill)}
+                                                    className="whitespace-nowrap rounded-md bg-[#4f7188] px-2 py-1 text-[10px] font-semibold text-white"
+                                                >
+                                                    Send Reminder
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-2xl bg-slate-100 px-5 py-4">
-                        <p className="text-sm text-slate-500">Total Revenue</p>
-                        <p className="text-4xl font-semibold text-slate-900">{toPeso(totals.totalRevenue)}</p>
+                {isHistoryOpen ? (
+                    <div className="overflow-hidden rounded-md border border-[#b79f93] bg-white">
+                        <div className="apartment-scrollbar max-h-[260px] overflow-auto">
+                            <table className="w-full min-w-[780px] border-collapse text-left text-xs">
+                                <thead className="sticky top-0 z-10 bg-[#f5f3eb]">
+                                    <tr className="border-b border-[#ddd3c8] text-[#677482]">
+                                        <th className="px-3 py-2 font-semibold">Tenant Name</th>
+                                        <th className="px-3 py-2 font-semibold">Unit</th>
+                                        <th className="px-3 py-2 font-semibold">Amount</th>
+                                        <th className="px-3 py-2 font-semibold">Date</th>
+                                        <th className="px-3 py-2 font-semibold">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {historyBills.map((bill) => (
+                                        <tr key={`history-${bill.room}-${bill.tenant}`} className="border-b border-[#eee6e0] text-[#3e5262]">
+                                            <td className="px-3 py-2">{bill.tenant}</td>
+                                            <td className="px-3 py-2">{bill.room}</td>
+                                            <td className="px-3 py-2">{bill.total}</td>
+                                            <td className="px-3 py-2">{bill.dueDate}</td>
+                                            <td className="px-3 py-2">Paid</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div className="rounded-2xl bg-[#edf8f0] px-5 py-4">
-                        <p className="text-sm text-slate-500">Collected</p>
-                        <p className="text-4xl font-semibold text-[#0c9f45]">{toPeso(totals.collected)}</p>
-                    </div>
-                    <div className="rounded-2xl bg-[#fff9e7] px-5 py-4">
-                        <p className="text-sm text-slate-500">Pending</p>
-                        <p className="text-4xl font-semibold text-[#d28a00]">{toPeso(totals.pending)}</p>
-                    </div>
-                    <div className="rounded-2xl bg-[#ffeff1] px-5 py-4">
-                        <p className="text-sm text-slate-500">Overdue</p>
-                        <p className="text-4xl font-semibold text-[#e32638]">{toPeso(totals.overdue)}</p>
-                    </div>
-                </div>
+                ) : null}
+
             </section>
 
             {selectedBill ? (
                 <div
-                    className="apartment-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 lg:pl-[280px]"
+                    className="apartment-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
                     role="dialog"
                     aria-modal="true"
                     onClick={() => setSelectedBill(null)}
                 >
                     <div
-                        className="apartment-modal-content w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+                        className="apartment-modal-content w-full max-w-md rounded-md border border-[#b79f93] bg-[#f8f7f3] p-4 shadow-xl"
                         onClick={(event) => event.stopPropagation()}
                     >
-                        <h3 className="text-xl font-semibold text-slate-900">Bill Details</h3>
-                        <div className="mt-4 space-y-2 text-sm">
+                        <h3 className="text-sm font-semibold uppercase text-[#2f4e64]">
+                            Payment Confirmation
+                        </h3>
+                        <div className="mt-3 space-y-1 text-xs text-[#465a69]">
                             <p>
                                 Tenant: <span className="font-semibold">{selectedBill.tenant}</span>
                             </p>
@@ -290,13 +420,139 @@ export default function Billing() {
                                 Status: <span className="font-semibold">{selectedBill.status}</span>
                             </p>
                         </div>
-                        <div className="mt-6 flex justify-end">
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                className="rounded-md bg-[#5f7f95] px-4 py-1.5 text-xs font-semibold text-white"
+                            >
+                                Confirm
+                            </button>
                             <button
                                 type="button"
                                 onClick={() => setSelectedBill(null)}
-                                className="rounded-xl border border-black/15 px-4 py-2 text-sm font-semibold"
+                                className="rounded-md border border-[#c9bbb0] bg-white px-4 py-1.5 text-xs font-semibold text-[#3f5667]"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+            {isAddPayeeOpen ? (
+                <div
+                    className="apartment-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+                    role="dialog"
+                    aria-modal="true"
+                    onClick={() => setIsAddPayeeOpen(false)}
+                >
+                    <div
+                        className="apartment-modal-content w-full max-w-xl rounded-md border border-[#b79f93] bg-[#f8f7f3] p-4 shadow-xl"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <h3 className="mb-3 text-sm font-semibold uppercase text-[#2f4e64]">
+                            Add New Payee
+                        </h3>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                            <label className="text-xs text-[#4f6271]">
+                                Tenant Name
+                                <input
+                                    value={newPayee.tenant}
+                                    onChange={(event) =>
+                                        setNewPayee((current) => ({
+                                            ...current,
+                                            tenant: event.target.value,
+                                        }))
+                                    }
+                                    className="mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none"
+                                />
+                            </label>
+                            <label className="text-xs text-[#4f6271]">
+                                Unit #
+                                <input
+                                    value={newPayee.room}
+                                    onChange={(event) =>
+                                        setNewPayee((current) => ({
+                                            ...current,
+                                            room: event.target.value,
+                                        }))
+                                    }
+                                    className="mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none"
+                                />
+                            </label>
+                            <label className="text-xs text-[#4f6271]">
+                                Rent
+                                <input
+                                    value={newPayee.rent}
+                                    onChange={(event) =>
+                                        setNewPayee((current) => ({
+                                            ...current,
+                                            rent: event.target.value,
+                                        }))
+                                    }
+                                    className="mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none"
+                                />
+                            </label>
+                            <label className="text-xs text-[#4f6271]">
+                                Electricity
+                                <input
+                                    value={newPayee.electricity}
+                                    onChange={(event) =>
+                                        setNewPayee((current) => ({
+                                            ...current,
+                                            electricity: event.target.value,
+                                        }))
+                                    }
+                                    className="mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none"
+                                />
+                            </label>
+                            <label className="text-xs text-[#4f6271]">
+                                Water
+                                <input
+                                    value={newPayee.water}
+                                    onChange={(event) =>
+                                        setNewPayee((current) => ({
+                                            ...current,
+                                            water: event.target.value,
+                                        }))
+                                    }
+                                    className="mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none"
+                                />
+                            </label>
+                            <label className="text-xs text-[#4f6271]">
+                                Due Date
+                                <input
+                                    value={newPayee.dueDate}
+                                    onChange={(event) =>
+                                        setNewPayee((current) => ({
+                                            ...current,
+                                            dueDate: event.target.value,
+                                        }))
+                                    }
+                                    className="mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none"
+                                />
+                            </label>
+                        </div>
+
+                        <p className="mt-3 text-xs font-semibold text-[#2f4e64]">
+                            Total Amount: {toPeso((Number(newPayee.rent) || 0) + (Number(newPayee.electricity) || 0) + (Number(newPayee.water) || 0))}
+                        </p>
+
+                        <div className="mt-4 flex justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setIsAddPayeeOpen(false)}
+                                className="rounded-md border border-[#c9bbb0] bg-white px-4 py-1.5 text-xs font-semibold text-[#3f5667]"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={addPayee}
+                                className="rounded-md bg-[#2ca94e] px-4 py-1.5 text-xs font-semibold text-white"
+                            >
+                                Add Payee
                             </button>
                         </div>
                     </div>
