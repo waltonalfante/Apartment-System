@@ -1,36 +1,59 @@
 import { Head } from '@inertiajs/react';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
-import AppLayout from '@/layouts/app-layout';
-import { dashboard } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
+import ApartmentLayout from '@/layouts/apartment-layout';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-    },
+const metrics = [
+    { label: 'Total Rooms', value: '24' },
+    { label: 'Occupied', value: '20' },
+    { label: 'Available', value: '4' },
+    { label: 'Pending Tickets', value: '3' },
 ];
 
 export default function Dashboard() {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <ApartmentLayout title="Dashboard">
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                </div>
+            <div className="space-y-6">
+                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {metrics.map((metric) => (
+                        <article
+                            key={metric.label}
+                            className="rounded-2xl bg-white px-5 py-4 shadow-sm"
+                        >
+                            <p className="text-sm font-medium text-slate-500">
+                                {metric.label}
+                            </p>
+                            <p className="mt-1 text-3xl font-bold text-slate-900">
+                                {metric.value}
+                            </p>
+                        </article>
+                    ))}
+                </section>
+
+                <section className="grid gap-6 xl:grid-cols-3">
+                    <article className="rounded-2xl bg-white p-6 shadow-sm xl:col-span-2">
+                        <h2 className="mb-4 text-xl font-semibold text-slate-900">
+                            Monthly Occupancy
+                        </h2>
+                        <div className="h-64 rounded-xl border border-dashed border-slate-300 bg-slate-50" />
+                    </article>
+                    <article className="rounded-2xl bg-white p-6 shadow-sm">
+                        <h2 className="mb-4 text-xl font-semibold text-slate-900">
+                            Recent Activity
+                        </h2>
+                        <ul className="space-y-3 text-sm text-slate-700">
+                            <li className="rounded-lg bg-slate-50 px-3 py-2">
+                                Room 15 changed to Available
+                            </li>
+                            <li className="rounded-lg bg-slate-50 px-3 py-2">
+                                New tenant inquiry received
+                            </li>
+                            <li className="rounded-lg bg-slate-50 px-3 py-2">
+                                Billing cycle generated for March
+                            </li>
+                        </ul>
+                    </article>
+                </section>
             </div>
-        </AppLayout>
+        </ApartmentLayout>
     );
 }
