@@ -10,6 +10,7 @@ RUN composer dump-autoload --optimize --no-interaction
 
 # Stage 2: build frontend
 FROM node:20-bookworm-slim AS node_builder
+ENV VITE_DISABLE_WAYFINDER=true
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --silent
