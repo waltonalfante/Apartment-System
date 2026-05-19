@@ -25,6 +25,8 @@ RUN npm run build
 FROM php:8.4-fpm-alpine AS runtime
 ENV APP_ENV=production
 ENV PORT=8080
+ENV SESSION_DRIVER=file
+ENV CACHE_STORE=file
 
 # Install system deps and nginx
 RUN apk add --no-cache nginx bash git icu-libs tzdata libzip libpng oniguruma curl zip libstdc++ sqlite-dev gmp \
@@ -47,7 +49,8 @@ RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache /run/nginx \
 EXPOSE 8080
 
 # Start php-fpm (daemon) and nginx in foreground
-CMD php artisan key:generate --force || true && \
+CMD php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');" || true && \
+    php artisan migrate --force || true && \
     php artisan config:cache || true && \
     php artisan route:cache || true && \
     php artisan view:cache || true && \

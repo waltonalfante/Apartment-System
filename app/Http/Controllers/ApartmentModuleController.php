@@ -18,10 +18,21 @@ use Inertia\Response;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ApartmentModuleController extends Controller
 {
+    private function roomNumberOrderSql(): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        return match ($driver) {
+            'pgsql' => "CAST(REGEXP_REPLACE(number, '[^0-9]', '', 'g') AS INTEGER)",
+            default => "CAST(REPLACE(number, 'Room ', '') AS INTEGER)",
+        };
+    }
+
     private function activeTenantQuery()
     {
         $today = now()->toDateString();
@@ -186,7 +197,7 @@ class ApartmentModuleController extends Controller
         if (Schema::hasTable('rooms')) {
             $roomsQuery = Room::query()
                 ->select(['id', 'number', 'occupied', 'photo_path', 'kitchen_photo', 'room_photo', 'cr_photo', 'bed_photo'])
-                ->orderByRaw("CAST(REPLACE(number, 'Room ', '') AS UNSIGNED)");
+                ->orderByRaw($this->roomNumberOrderSql());
 
             if ($page === 1) {
                 $rooms = $roomsQuery->paginate(10)->withQueryString();
@@ -1158,7 +1169,7 @@ class ApartmentModuleController extends Controller
 
             if ($photoCount > 0) {
                 $rooms = Room::query()
-                    ->orderByRaw("CAST(REPLACE(number, 'Room ', '') AS UNSIGNED)")
+                    ->orderByRaw($this->roomNumberOrderSql())
                     ->get();
 
                 foreach ($rooms as $idx => $room) {
