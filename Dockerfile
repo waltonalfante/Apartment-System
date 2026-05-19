@@ -2,7 +2,8 @@
 
 # Stage 1: install PHP dependencies
 FROM composer:2 AS composer_builder
-RUN apk add --no-cache git unzip
+RUN apk add --no-cache git unzip gmp-dev
+RUN docker-php-ext-install gmp
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts
@@ -27,9 +28,9 @@ ENV APP_ENV=production
 ENV PORT=8080
 
 # Install system deps and nginx
-RUN apk add --no-cache nginx bash git icu-libs tzdata libzip libpng oniguruma curl zip libstdc++ sqlite-dev \
-    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev zlib-dev libpng-dev oniguruma-dev \
-    && docker-php-ext-install pdo_mysql pdo_sqlite zip intl opcache \
+RUN apk add --no-cache nginx bash git icu-libs tzdata libzip libpng oniguruma curl zip libstdc++ sqlite-dev gmp \
+    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev zlib-dev libpng-dev oniguruma-dev gmp-dev \
+    && docker-php-ext-install pdo_mysql pdo_sqlite zip intl opcache gmp \
     && apk del .build-deps || true
 
 WORKDIR /var/www/html
