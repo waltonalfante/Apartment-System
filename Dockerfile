@@ -28,10 +28,10 @@ ENV PORT=8080
 ENV SESSION_DRIVER=file
 ENV CACHE_STORE=file
 
-# Install system deps and nginx
-RUN apk add --no-cache nginx bash git icu-libs tzdata libzip libpng oniguruma curl zip libstdc++ sqlite-dev gmp \
-    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev zlib-dev libpng-dev oniguruma-dev gmp-dev \
-    && docker-php-ext-install pdo_mysql pdo_sqlite zip intl opcache gmp \
+# Install system deps and nginx, plus PostgreSQL client/dev for pdo_pgsql
+RUN apk add --no-cache nginx bash git icu-libs tzdata libzip libpng oniguruma curl zip libstdc++ sqlite-dev gmp postgresql-libs \
+    && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev zlib-dev libpng-dev oniguruma-dev gmp-dev postgresql-dev \
+    && docker-php-ext-install pdo_mysql pdo_sqlite pdo_pgsql zip intl opcache gmp \
     && apk del .build-deps || true
 
 WORKDIR /var/www/html
