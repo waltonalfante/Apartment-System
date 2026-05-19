@@ -40,18 +40,20 @@ WORKDIR /var/www/html
 COPY --from=composer_builder /app /var/www/html
 COPY --from=node_builder /app/public/build /var/www/html/public/build
 
+# Ensure an .env file exists so artisan commands that edit .env won't fail
+RUN cd /var/www/html && [ -f .env ] || cp .env.example .env || true
+
 # nginx config will be copied from repo path docker/nginx.conf
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+
+# copy startup script and make executable
+COPY docker/start.sh /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start.sh || true
 
 RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache /run/nginx \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
 
 EXPOSE 8080
 
-# Start php-fpm (daemon) and nginx in foreground
-CMD php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');" || true && \
-    php artisan migrate --force || true && \
-    php artisan config:cache || true && \
-    php artisan route:cache || true && \
-    php artisan view:cache || true && \
-    php-fpm -D && nginx -g 'daemon off;'
+# Start via startup script that prints diagnostics then launches services
+CMD ["/usr/local/bin/start.sh"]
