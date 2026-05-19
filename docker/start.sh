@@ -18,6 +18,16 @@ ls -la /var/www/html/.env || true
 echo "--- public/index.php presence ---"
 ls -la /var/www/html/public/index.php || true
 
+echo "--- public/build listing ---"
+ls -la /var/www/html/public/build || true
+
+echo "--- nginx error log (last 200 lines) ---"
+if [ -f /var/log/nginx/error.log ]; then
+  tail -n 200 /var/log/nginx/error.log || true
+else
+  echo "(no /var/log/nginx/error.log yet)"
+fi
+
 echo "--- Recent Laravel logs ---"
 tail -n 200 /var/www/html/storage/logs/laravel.log || true
 
