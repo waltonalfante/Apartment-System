@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Laravel app
 
 # Stage 1: build frontend
-FROM node:18-alpine AS node_builder
+FROM FROM node:20-alpine AS node_builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --silent
@@ -22,7 +22,7 @@ ENV APP_ENV=production
 ENV PORT=8080
 
 # Install system deps and nginx
-RUN apk add --no-cache nginx bash git icu-libs tzdata libzip libpng oniguruma curl zip libstdc++ \
+RUN apk add --no-cache nginx bash git icu-libs tzdata libzip libpng oniguruma curl zip libstdc++ sqlite-dev \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev zlib-dev libpng-dev oniguruma-dev \
     && docker-php-ext-install pdo_mysql pdo_sqlite zip intl opcache \
     && apk del .build-deps || true
