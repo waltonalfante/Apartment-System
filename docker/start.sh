@@ -15,6 +15,9 @@ fi
 echo "--- .env presence ---"
 ls -la /var/www/html/.env || true
 
+echo "--- public/index.php presence ---"
+ls -la /var/www/html/public/index.php || true
+
 echo "--- Recent Laravel logs ---"
 tail -n 200 /var/www/html/storage/logs/laravel.log || true
 
