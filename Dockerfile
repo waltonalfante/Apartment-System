@@ -4,6 +4,9 @@
 FROM node:20-alpine AS node_builder
 RUN apk add --no-cache php83 php83-cli && ln -s /usr/bin/php83 /usr/bin/php
 WORKDIR /app
+COPY composer.json composer.lock ./
+RUN apk add --no-cache curl && curl -sS https://getcomposer.org/installer | php83 -- --install-dir=/usr/local/bin --filename=composer
+RUN composer install --no-dev --no-interaction --no-scripts
 COPY package*.json ./
 RUN npm ci --silent
 COPY . .
