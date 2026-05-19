@@ -38,6 +38,12 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
+        $redirectTo = (string) $request->input('redirect_to', '');
+
+        if ($redirectTo !== '' && str_starts_with($redirectTo, '/')) {
+            return redirect($redirectTo);
+        }
+
         return to_route('profile.edit');
     }
 

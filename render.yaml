@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: apartment-system-web
+    env: docker
+    plan: free
+    dockerfilePath: Dockerfile
+    branch: main
+    autoDeploy: true
+
+  - type: worker
+    name: apartment-system-worker
+    env: docker
+    plan: free
+    dockerfilePath: Dockerfile
+    branch: main
+    startCommand: php artisan queue:work --sleep=3 --tries=3 --timeout=90
+    autoDeploy: true
+
+cron:
+  - name: schedule
+    schedule: "* * * * *"
+    command: php artisan schedule:run

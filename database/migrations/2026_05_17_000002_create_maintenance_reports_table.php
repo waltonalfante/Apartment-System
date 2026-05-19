@@ -1,0 +1,29 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('maintenance_reports', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('tenant_id')->nullable()->index();
+            $table->string('tenant_name')->nullable();
+            $table->string('room_code')->nullable();
+            $table->string('repair');
+            $table->date('start_date')->nullable();
+            $table->string('price')->nullable();
+            $table->enum('status', ['Ongoing', 'Done'])->default('Ongoing');
+            $table->text('notes')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('maintenance_reports');
+    }
+};
