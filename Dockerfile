@@ -40,6 +40,9 @@ WORKDIR /var/www/html
 COPY --from=composer_builder /app /var/www/html
 COPY --from=node_builder /app/public/build /var/www/html/public/build
 
+# Ensure an .env file exists so artisan commands that edit .env won't fail
+RUN cd /var/www/html && [ -f .env ] || cp .env.example .env || true
+
 # nginx config will be copied from repo path docker/nginx.conf
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 
