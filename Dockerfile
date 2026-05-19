@@ -2,11 +2,13 @@
 
 # Stage 1: install PHP dependencies
 FROM composer:2 AS composer_builder
+RUN apk add --no-cache git unzip
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts
 COPY . .
 RUN composer dump-autoload --optimize --no-interaction
+RUN APP_ENV=production APP_KEY=base64:0000000000000000000000000000000000000000000= php artisan wayfinder:generate --with-form
 
 # Stage 2: build frontend
 FROM node:20-bookworm-slim AS node_builder
@@ -15,6 +17,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --silent
 COPY . .
+COPY --from=composer_builder /app/resources/js/routes /app/resources/js/routes
+COPY --from=composer_builder /app/resources/js/wayfinder /app/resources/js/wayfinder
 RUN npm run build
 
 # Stage 3: runtime with php-fpm + nginx
