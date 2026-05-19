@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Laravel app
 
 # Stage 1: build frontend
-FROM FROM node:20-alpine AS node_builder
+FROM node:20-alpine AS node_builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --silent
