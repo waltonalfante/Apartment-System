@@ -11,6 +11,9 @@ import { login } from '@/routes';
 import { email } from '@/routes/password';
 
 export default function ForgotPassword({ status }: { status?: string }) {
+    const authInputClassName =
+        'auth-input h-9 border-[#b9b7ad] bg-[#f7f6f2] text-xs text-[#223848] caret-[#223848] placeholder:text-[#97a2ab] focus-visible:border-[#7d93a4] focus-visible:ring-[2px] focus-visible:ring-[#5f7f95]/25';
+
     return (
         <AuthLayout
             title="Forgot password"
@@ -19,32 +22,33 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <Head title="Forgot password" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-3 text-center text-xs font-medium text-[#2ca94e]">
                     {status}
                 </div>
             )}
 
-            <div className="space-y-6">
+            <div className="space-y-4">
                 <Form {...email.form()}>
                     {({ processing, errors }) => (
                         <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="email" className="text-xs text-[#4f6271]">Email address</Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     name="email"
                                     autoComplete="off"
                                     autoFocus
-                                    placeholder="email@example.com"
+                                    placeholder="Email address"
+                                    className={authInputClassName}
                                 />
 
                                 <InputError message={errors.email} />
                             </div>
 
-                            <div className="my-6 flex items-center justify-start">
+                            <div className="mt-4 flex items-center justify-start">
                                 <Button
-                                    className="w-full"
+                                    className="h-9 w-full bg-[#5f7f95] text-xs font-semibold text-white hover:bg-[#4f7088]"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >
@@ -58,9 +62,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     )}
                 </Form>
 
-                <div className="space-x-1 text-center text-sm text-muted-foreground">
+                <div className="space-x-1 text-center text-xs text-[#657784]">
                     <span>Or, return to</span>
-                    <TextLink href={login()}>log in</TextLink>
+                    <TextLink href={login()} className="text-[#5f7f95]">log in</TextLink>
                 </div>
             </div>
         </AuthLayout>

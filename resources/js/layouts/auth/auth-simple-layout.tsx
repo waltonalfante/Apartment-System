@@ -1,6 +1,3 @@
-import { Link } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
 export default function AuthSimpleLayout({
@@ -8,30 +5,60 @@ export default function AuthSimpleLayout({
     title,
     description,
 }: AuthLayoutProps) {
-    return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-2 font-medium"
-                        >
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
-                        </Link>
+    const safeTitle = title ?? 'Login';
+    const safeDescription = description ?? '';
+    const isCreateAccount = safeTitle.toLowerCase().includes('create');
+    const heading = isCreateAccount ? 'Create Account' : safeTitle;
+    const loginSideImagePath = '/images/auth/login-side.jpg';
+    const registerSideImagePath = '/images/auth/register-side.jpg';
+    const sideImagePath = isCreateAccount ? registerSideImagePath : loginSideImagePath;
+    const cardWidthClass = isCreateAccount ? 'max-w-[430px]' : 'max-w-[390px]';
 
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
-                                {description}
-                            </p>
-                        </div>
-                    </div>
-                    {children}
-                </div>
+    const photoPanel = (
+        <section className="relative hidden w-[470px] shrink-0 overflow-hidden lg:block">
+            <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                    backgroundImage: `linear-gradient(180deg, rgba(16, 24, 34, 0.24), rgba(16, 24, 34, 0.18)), url('${sideImagePath}')`,
+                }}
+            />
+        </section>
+    );
+
+    const formPanel = (
+        <section className="relative flex min-h-screen min-w-0 flex-1 items-center justify-center bg-[#214f71] px-4 py-7 sm:px-7 lg:px-8">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,rgba(255,255,255,0.2),transparent_42%),radial-gradient(circle_at_8%_80%,rgba(255,255,255,0.12),transparent_42%)]" />
+
+            <div className={`relative z-10 w-full ${cardWidthClass} rounded-lg border border-[#c6bba5] bg-[#f0ead7] px-5 py-6 shadow-[0_14px_30px_rgba(0,0,0,0.2)] sm:px-7 sm:py-7`}>
+                <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-wide text-[#314f65]">
+                    The Sammie's Apartment
+                </p>
+                <h1 className="text-center text-xl font-semibold text-[#223848]">
+                    {heading}
+                </h1>
+                <p className="mb-4 mt-1 text-center text-[11px] text-[#647684]">
+                    {safeDescription}
+                </p>
+
+                {children}
+            </div>
+        </section>
+    );
+
+    return (
+        <div className="min-h-screen min-h-svh bg-[#131722]">
+            <div className="flex min-h-screen w-full">
+                {isCreateAccount ? (
+                    <>
+                        {formPanel}
+                        {photoPanel}
+                    </>
+                ) : (
+                    <>
+                        {photoPanel}
+                        {formPanel}
+                    </>
+                )}
             </div>
         </div>
     );
