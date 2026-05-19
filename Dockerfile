@@ -2,6 +2,7 @@
 
 # Stage 1: build frontend
 FROM node:20-alpine AS node_builder
+RUN apk add --no-cache php83 php83-cli
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --silent
