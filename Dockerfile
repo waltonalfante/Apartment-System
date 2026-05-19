@@ -1,24 +1,20 @@
 # Multi-stage Dockerfile for Laravel app
 
-# Stage 1: build frontend
-FROM node:20-alpine AS node_builder
-RUN apk add --no-cache php83 php83-cli && ln -s /usr/bin/php83 /usr/bin/php
-WORKDIR /app
-COPY composer.json composer.lock ./
-RUN apk add --no-cache curl && curl -sS https://getcomposer.org/installer | php83 -- --install-dir=/usr/local/bin --filename=composer
-RUN composer install --no-dev --no-interaction --no-scripts
-COPY package*.json ./
-RUN npm ci --silent
-COPY . .
-RUN npm run build
-
-# Stage 2: install PHP dependencies
+# Stage 1: install PHP dependencies
 FROM composer:2 AS composer_builder
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts
 COPY . .
 RUN composer dump-autoload --optimize --no-interaction
+
+# Stage 2: build frontend
+FROM node:20-alpine AS node_builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --silent
+COPY . .
+RUN npm run build
 
 # Stage 3: runtime with php-fpm + nginx
 FROM php:8.2-fpm-alpine AS runtime
