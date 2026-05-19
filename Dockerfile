@@ -22,7 +22,7 @@ COPY --from=composer_builder /app/resources/js /app/resources/js
 RUN npm run build
 
 # Stage 3: runtime with php-fpm + nginx
-FROM php:8.2-fpm-alpine AS runtime
+FROM php:8.4-fpm-alpine AS runtime
 ENV APP_ENV=production
 ENV PORT=8080
 
@@ -39,7 +39,7 @@ COPY --from=composer_builder /app /var/www/html
 COPY --from=node_builder /app/public/build /var/www/html/public/build
 
 # nginx config will be copied from repo path docker/nginx.conf
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 
 RUN mkdir -p /var/www/html/storage /var/www/html/bootstrap/cache /run/nginx \
     && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
