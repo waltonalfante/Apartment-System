@@ -24,7 +24,7 @@ ENV PORT=8080
 # Install system deps and nginx
 RUN apk add --no-cache nginx bash git icu-libs tzdata libzip libpng oniguruma curl zip libstdc++ \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev zlib-dev libpng-dev oniguruma-dev \
-    && docker-php-ext-install pdo_mysql zip intl opcache \
+    && docker-php-ext-install pdo_mysql pdo_sqlite zip intl opcache \
     && apk del .build-deps || true
 
 WORKDIR /var/www/html
