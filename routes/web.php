@@ -72,6 +72,12 @@ Route::get('/_admin/diagnostics', function (Request $request) {
         $out['users_error'] = $e->getMessage();
     }
 
+    try {
+        $out['recent_email_logs'] = DB::select("SELECT id,user_id,recipient,subject,status,error_message,created_at FROM email_logs ORDER BY id DESC LIMIT 20");
+    } catch (\Exception $e) {
+        $out['email_logs_error'] = $e->getMessage();
+    }
+
     return response()->json($out);
 });
 
