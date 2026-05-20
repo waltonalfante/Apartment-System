@@ -46,5 +46,6 @@ php artisan route:cache || true
 php artisan view:cache || true
 
 echo "=== STARTING SERVICES ==="
+php artisan queue:work --queue=default --sleep=3 --tries=3 --timeout=90 >/var/www/html/storage/logs/queue-worker.log 2>&1 &
 php-fpm -D
 nginx -g 'daemon off;'
