@@ -43,7 +43,7 @@ class OtpService
         ])->save();
 
         try {
-            Mail::to($user->email)->queue(new TwoFactorCode($plainCode, $subjectLine, $headingLine));
+            Mail::to($user->email)->send(new TwoFactorCode($plainCode, $subjectLine, $headingLine));
 
             $this->emailLogService->sent($user->id, $user->email, $subjectLine, 'otp', [
                 'purpose' => $purpose,
