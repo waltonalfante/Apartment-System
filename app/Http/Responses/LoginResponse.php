@@ -23,7 +23,7 @@ class LoginResponse implements LoginResponseContract
             try {
                 app(OtpService::class)->issue($user, 'login', ['source' => 'web-login'], 'Your Apartment Verification Code', 'Verification Code');
                 $verificationSent = true;
-                \Log::info('LoginResponse: verification code sent', ['user_id' => $user->id, 'method' => 'mail']);
+                    \Log::info('LoginResponse: verification code queued', ['user_id' => $user->id, 'method' => 'queue']);
             } catch (\Throwable $exception) {
                 Log::error('Failed to send login verification code.', [
                     'user_id' => $user->id,
@@ -36,8 +36,8 @@ class LoginResponse implements LoginResponseContract
         return redirect()->route('auth.2fa-verify')->with(
             'status',
             $verificationSent
-                ? 'We sent a verification code to your email.'
-                : 'You are logged in, but the verification email could not be sent. Check the mail configuration.'
+                    ? 'We queued a verification code email to your inbox.'
+                    : 'You are logged in, but the verification email could not be queued. Check the mail configuration.'
         );
     }
 }

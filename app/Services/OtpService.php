@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Mail\TwoFactorCode;
+use App\Jobs\SendOtpVerificationEmail;
 use App\Models\OtpCode;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class OtpService
@@ -43,16 +43,30 @@ class OtpService
         ])->save();
 
         try {
-            Mail::to($user->email)->send(new TwoFactorCode($plainCode, $subjectLine, $headingLine));
-
-            $this->emailLogService->sent($user->id, $user->email, $subjectLine, 'otp', [
+            $this->emailLogService->queued($user->id, $user->email, $subjectLine, 'otp', [
                 'purpose' => $purpose,
                 'otp_id' => $otp->id,
             ]);
+
+            SendOtpVerificationEmail::dispatch(
+                $user->id,
+                $user->email,
+                $plainCode,
+                $subjectLine,
+                $headingLine,
+                $purpose,
+                $otp->id,
+            )->onQueue('default');
         } catch (Throwable $exception) {
             $this->emailLogService->failed($user->id, $user->email, $subjectLine, 'otp', $exception->getMessage(), [
                 'purpose' => $purpose,
                 'otp_id' => $otp->id,
+            ]);
+
+            Log::error('Failed to queue login verification code.', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'exception' => $exception->getMessage(),
             ]);
 
             throw $exception;
