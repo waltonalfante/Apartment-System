@@ -17,7 +17,7 @@ Quick steps:
      - `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
      - Mail settings: `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
      - `FILESYSTEM_DRIVER=s3` and corresponding `AWS_*` vars if using S3
-     - `QUEUE_CONNECTION=database` (or `redis`) and Redis vars if needed
+    - `QUEUE_CONNECTION=sync` if you do not want a queue table/worker; OTP mail is dispatched after the response
 
 3. Deploy and run migrations from Render shell:
 

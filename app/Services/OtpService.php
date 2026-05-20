@@ -48,7 +48,7 @@ class OtpService
                 'otp_id' => $otp->id,
             ]);
 
-            SendOtpVerificationEmail::dispatch(
+            SendOtpVerificationEmail::dispatchAfterResponse(
                 $user->id,
                 $user->email,
                 $plainCode,
