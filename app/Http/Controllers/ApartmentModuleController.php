@@ -805,7 +805,7 @@ class ApartmentModuleController extends Controller
                         'billing_month_year' => $tenant->billing_month_year,
                         'billing_electricity' => $tenant->billing_electricity,
                         'billing_water' => $tenant->billing_water,
-                        'billing_paid_amount' => $tenant->billing_paid_amount,
+                        'billing_paid_amount' => $tenant->billing_paid_amount ?? $tenant->downpayment,
                         'billing_payment_method' => $tenant->billing_payment_method,
                         'billing_receipt_path' => $tenant->billing_receipt_path,
                         'account_credit' => $tenant->account_credit ?? 0,

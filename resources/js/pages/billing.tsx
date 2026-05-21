@@ -86,7 +86,7 @@ const buildBillsFromTenants = (
         downpayment: Number(tenant.downpayment ?? 0),
         paymentType: tenant.payment_type ?? 'cash',
         gcashNumber: tenant.gcash_number ?? null,
-        billingPaidAmount: Number(tenant.billing_paid_amount ?? 0),
+        billingPaidAmount: Number(tenant.billing_paid_amount ?? tenant.downpayment ?? 0),
         billingPaymentMethod: tenant.billing_payment_method ?? null,
         billingReceiptPath: tenant.billing_receipt_path ?? null,
         status: tenant.billing_status ?? 'Pending',
