@@ -808,6 +808,7 @@ class ApartmentModuleController extends Controller
                         'billing_paid_amount' => $tenant->billing_paid_amount,
                         'billing_payment_method' => $tenant->billing_payment_method,
                         'billing_receipt_path' => $tenant->billing_receipt_path,
+                        'account_credit' => $tenant->account_credit ?? 0,
                     ];
                 }),
             'billingHistory' => Tenant::query()
@@ -858,6 +859,10 @@ class ApartmentModuleController extends Controller
         $totalDue = 6000 + $electricity + $water;
         $paymentAmount = max(0, (float) ($validated['amount_paid'] ?? 0));
         $previousPaidAmount = max(0, (float) ($tenant->billing_paid_amount ?? 0));
+        $remaining = max(0, $totalDue - $previousPaidAmount);
+
+        $overpay = $paymentAmount > $remaining ? $paymentAmount - $remaining : 0;
+
         $paidAmount = min($previousPaidAmount + $paymentAmount, $totalDue);
         $receiptPath = $tenant->billing_receipt_path;
 
@@ -894,6 +899,10 @@ class ApartmentModuleController extends Controller
             'billing_payment_method' => $validated['payment_method'],
             'billing_receipt_path' => $receiptPath,
         ]);
+
+        if ($overpay > 0) {
+            $tenant->increment('account_credit', $overpay);
+        }
 
         return back()->with('success', "Billing updated for {$tenant->name}.");
     }

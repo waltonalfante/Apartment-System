@@ -17,6 +17,7 @@ type Bill = {
     billingPaidAmount?: number;
     billingPaymentMethod?: 'cash' | 'gcash' | null;
     billingReceiptPath?: string | null;
+    accountCredit?: number;
     status: 'Paid' | 'Partial' | 'Pending' | 'Overdue';
     dueDate: string;
 };
@@ -38,6 +39,7 @@ type TenantEntry = {
     billing_paid_amount?: number | string;
     billing_payment_method?: 'cash' | 'gcash' | null;
     billing_receipt_path?: string | null;
+    account_credit?: number | string;
 };
 
 type BillingHistoryEntry = {
@@ -231,6 +233,13 @@ export default function Billing({
     );
 
     const [localBillingHistory, setLocalBillingHistory] = useState<BillingHistoryEntry[]>(billingHistory);
+    const [localTenantCredits, setLocalTenantCredits] = useState<Record<number, number>>(() => {
+        const map: Record<number, number> = {};
+        tenants.forEach((t) => {
+            if (t.id) map[t.id] = Number(t.account_credit ?? 0);
+        });
+        return map;
+    });
 
     const paidHistoryBills = useMemo(
         () => buildPaidHistoryBills(localBillingHistory),
@@ -423,6 +432,15 @@ export default function Billing({
     }, [billList, selectedBill]);
 
     useEffect(() => {
+        // keep local tenant credits in sync when server props change
+        const map: Record<number, number> = {};
+        tenants.forEach((t) => {
+            if (t.id) map[t.id] = Number(t.account_credit ?? 0);
+        });
+        setLocalTenantCredits(map);
+    }, [tenants]);
+
+    useEffect(() => {
         if (!selectedHistoryBill) {
             return;
         }
@@ -556,6 +574,18 @@ export default function Billing({
                     };
 
                     setLocalBillingHistory((current) => [newHistory, ...current]);
+
+                    // if there was an overpay, add it to local tenant credits
+                    const previousPaid = Number(selectedBill.billingPaidAmount ?? 0);
+                    const remaining = Math.max(totalValue - previousPaid, 0);
+                    const overpayLocal = Math.max(paidValue - remaining, 0);
+                    if (overpayLocal > 0) {
+                        setLocalTenantCredits((cur) => ({
+                            ...cur,
+                            [selectedBill.tenantId]: (cur[selectedBill.tenantId] ?? 0) + overpayLocal,
+                        }));
+                        setNotice(`Bill fully paid. P${overpayLocal.toLocaleString()} credited to tenant account.`);
+                    }
 
                     // remove from the active bill list
                     setBillList((current) => current.filter((b) => b.tenantId !== selectedBill.tenantId));
