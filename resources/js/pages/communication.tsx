@@ -345,7 +345,6 @@ export default function Communication({
                                         >
                                             <div className="mb-2 h-10 rounded-sm bg-[#54758b]" />
                                             <p className="font-semibold text-[#2f4e64]">{message.name}</p>
-                                            <p className="text-[#5f6e7a]">Gender: -</p>
                                             <p className="text-[#5f6e7a]">{message.room}</p>
                                             {message.unread ? (
                                                 <span className="mt-1 inline-block rounded-full bg-[#ef4242] px-2 py-0.5 text-[10px] font-semibold text-white">
