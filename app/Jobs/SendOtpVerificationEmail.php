@@ -35,11 +35,12 @@ class SendOtpVerificationEmail implements ShouldQueue
     public function handle(EmailLogService $emailLogService): void
     {
         try {
+            // Use a Resend-safe sender by default to avoid domain verification failures.
             $fromName = config('mail.from.name', 'The Sammie\'s Apartment');
-            $fromAddress = config('mail.from.address', env('MAIL_FROM_ADDRESS'));
+            $fromAddress = env('RESEND_FROM', 'onboarding@resend.dev');
 
             $payload = [
-                'from' => sprintf('%s <%s>', $fromName, $fromAddress),
+                'from' => str_contains($fromAddress, '<') ? $fromAddress : sprintf('%s <%s>', $fromName, $fromAddress),
                 'to' => [$this->recipient],
                 'subject' => $this->subject,
                 'html' => sprintf('<p>Your verification code: <strong>%s</strong></p>', $this->code),
