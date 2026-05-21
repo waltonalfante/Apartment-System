@@ -230,9 +230,11 @@ export default function Billing({
         [activeFilter, billList],
     );
 
+    const [localBillingHistory, setLocalBillingHistory] = useState<BillingHistoryEntry[]>(billingHistory);
+
     const paidHistoryBills = useMemo(
-        () => buildPaidHistoryBills(billingHistory),
-        [billingHistory],
+        () => buildPaidHistoryBills(localBillingHistory),
+        [localBillingHistory],
     );
 
     const allBills = useMemo(
@@ -425,14 +427,14 @@ export default function Billing({
             return;
         }
 
-        const refreshedHistoryBill = billingHistory.find(
+        const refreshedHistoryBill = localBillingHistory.find(
             (item) => item.id === selectedHistoryBill.id,
         );
 
         if (refreshedHistoryBill) {
             setSelectedHistoryBill(refreshedHistoryBill);
         }
-    }, [billingHistory, selectedHistoryBill]);
+    }, [localBillingHistory, selectedHistoryBill]);
 
     useEffect(() => {
         if (!selectedPayee) {
@@ -529,21 +531,50 @@ export default function Billing({
         router.post(`/billing/tenants/${selectedBill.tenantId}`, formData, {
             preserveScroll: true,
             onSuccess: () => {
-                setBillList((current) =>
-                    current.map((bill) =>
-                        bill.tenantId === selectedBill.tenantId
-                            ? {
-                                ...bill,
-                                electricity: `P ${electricityValue.toLocaleString()}`,
-                                water: `P ${waterValue.toLocaleString()}`,
-                                total: `P ${totalValue.toLocaleString()}`,
-                                billingPaidAmount: paidValue,
-                                billingPaymentMethod: editPaymentMethod,
-                                status: paidValue >= totalValue ? 'Paid' : paidValue > 0 ? 'Partial' : 'Pending',
-                            }
-                            : bill,
-                    ),
-                );
+                const isFullyPaid = paidValue >= totalValue;
+
+                if (isFullyPaid) {
+                    // create a history entry for immediate UI feedback
+                    const newHistory: BillingHistoryEntry = {
+                        id: Date.now(),
+                        room_code: selectedBill.room.replace('Room ', ''),
+                        name: selectedBill.tenant,
+                        billing_due_date: selectedBill.dueDate,
+                        billing_month_year: selectedBill.monthYear,
+                        billing_electricity: electricityValue,
+                        billing_water: waterValue,
+                        downpayment: selectedBill.downpayment,
+                        billing_paid_amount: paidValue,
+                        billing_payment_method: editPaymentMethod,
+                        billing_receipt_path: editPaymentMethod === 'gcash'
+                            ? (editReceiptFile ? URL.createObjectURL(editReceiptFile) : selectedBill.billingReceiptPath ?? null)
+                            : null,
+                        payment_type: selectedBill.paymentType,
+                        gcash_number: selectedBill.gcashNumber ?? null,
+                    };
+
+                    setLocalBillingHistory((current) => [newHistory, ...current]);
+
+                    // remove from the active bill list
+                    setBillList((current) => current.filter((b) => b.tenantId !== selectedBill.tenantId));
+                } else {
+                    setBillList((current) =>
+                        current.map((bill) =>
+                            bill.tenantId === selectedBill.tenantId
+                                ? {
+                                    ...bill,
+                                    electricity: `P ${electricityValue.toLocaleString()}`,
+                                    water: `P ${waterValue.toLocaleString()}`,
+                                    total: `P ${totalValue.toLocaleString()}`,
+                                    billingPaidAmount: paidValue,
+                                    billingPaymentMethod: editPaymentMethod,
+                                    status: paidValue > 0 ? 'Partial' : 'Pending',
+                                }
+                                : bill,
+                        ),
+                    );
+                }
+
                 setSelectedBill(null);
                 setNotice(`Payment updated for ${selectedBill.tenant}.`);
             },
