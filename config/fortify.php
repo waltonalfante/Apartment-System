@@ -147,13 +147,14 @@ return [
         Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
-        // Two-factor authentication is disabled for now.
-        // Keep this block commented for future re-enable work.
-        // Features::twoFactorAuthentication([
-        //     'confirm' => true,
-        //     'confirmPassword' => true,
-        //     // 'window' => 0
-        // ]),
+        // Two-factor routes are kept registered so frontend route
+        // generation includes the two-factor modules. The runtime
+        // behavior for issuing codes has been disabled elsewhere.
+        Features::twoFactorAuthentication([
+            'confirm' => true,
+            'confirmPassword' => true,
+            // 'window' => 0
+        ]),
     ],
 
 ];
