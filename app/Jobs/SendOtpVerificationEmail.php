@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 
 class SendOtpVerificationEmail implements ShouldQueue
 {
@@ -35,12 +35,40 @@ class SendOtpVerificationEmail implements ShouldQueue
     public function handle(EmailLogService $emailLogService): void
     {
         try {
-            Mail::to($this->recipient)->send(new TwoFactorCode($this->code, $this->subject, $this->heading));
+            $fromName = config('mail.from.name', 'The Sammie\'s Apartment');
+            $fromAddress = config('mail.from.address', env('MAIL_FROM_ADDRESS'));
 
-            $emailLogService->sent($this->userId, $this->recipient, $this->subject, 'otp', [
-                'purpose' => $this->purpose,
-                'otp_id' => $this->otpId,
-            ]);
+            $payload = [
+                'from' => sprintf('%s <%s>', $fromName, $fromAddress),
+                'to' => [$this->recipient],
+                'subject' => $this->subject,
+                'html' => sprintf('<p>Your verification code: <strong>%s</strong></p>', $this->code),
+                'text' => sprintf('Your verification code: %s', $this->code),
+            ];
+
+            $response = Http::withToken(env('RESEND_API_KEY'))
+                ->post('https://api.resend.com/emails', $payload);
+
+            if ($response->successful()) {
+                $emailLogService->sent($this->userId, $this->recipient, $this->subject, 'otp', [
+                    'purpose' => $this->purpose,
+                    'otp_id' => $this->otpId,
+                ]);
+            } else {
+                $body = (string) $response->body();
+                $emailLogService->failed($this->userId, $this->recipient, $this->subject, 'otp', $body, [
+                    'purpose' => $this->purpose,
+                    'otp_id' => $this->otpId,
+                ]);
+
+                Log::error('Resend API error when sending OTP.', [
+                    'user_id' => $this->userId,
+                    'email' => $this->recipient,
+                    'response' => $body,
+                ]);
+
+                throw new \RuntimeException('Resend API error: ' . $body);
+            }
         } catch (\Throwable $exception) {
             $emailLogService->failed($this->userId, $this->recipient, $this->subject, 'otp', $exception->getMessage(), [
                 'purpose' => $this->purpose,
