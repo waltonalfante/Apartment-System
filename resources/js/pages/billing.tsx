@@ -129,6 +129,9 @@ const parseAmount = (amount: string) => Number(amount.replace(/[^\d]/g, ''));
 
 const toPeso = (value: number) => `P ${value.toLocaleString()}`;
 
+const receiptUrl = (path?: string | null) =>
+    path ? `/storage/${path}` : null;
+
 const openDatePicker = (
     event: React.FocusEvent<HTMLInputElement> | React.MouseEvent<HTMLInputElement>,
 ) => {
@@ -398,6 +401,38 @@ export default function Billing({
     useEffect(() => {
         setHistoryPage((current) => Math.min(current, historyPageCount));
     }, [historyPageCount]);
+
+    useEffect(() => {
+        setBillList(buildBillsFromTenants(tenants, buildNextDueDate));
+    }, [tenants]);
+
+    useEffect(() => {
+        if (!selectedBill) {
+            return;
+        }
+
+        const refreshedSelectedBill = billList.find(
+            (bill) => bill.tenantId === selectedBill.tenantId,
+        );
+
+        if (refreshedSelectedBill) {
+            setSelectedBill(refreshedSelectedBill);
+        }
+    }, [billList, selectedBill]);
+
+    useEffect(() => {
+        if (!selectedHistoryBill) {
+            return;
+        }
+
+        const refreshedHistoryBill = billingHistory.find(
+            (item) => item.id === selectedHistoryBill.id,
+        );
+
+        if (refreshedHistoryBill) {
+            setSelectedHistoryBill(refreshedHistoryBill);
+        }
+    }, [billingHistory, selectedHistoryBill]);
 
     useEffect(() => {
         if (!selectedPayee) {
@@ -961,16 +996,23 @@ export default function Billing({
                                             onChange={(event) => setEditReceiptFile(event.target.files?.[0] ?? null)}
                                             className="block w-full text-[11px] text-[#465a69]"
                                         />
-                                            {selectedBill.billingReceiptPath ? (
+                                        {selectedBill.billingReceiptPath ? (
+                                            <div className="mt-2 space-y-2">
+                                                <img
+                                                    src={receiptUrl(selectedBill.billingReceiptPath) ?? ''}
+                                                    alt="Current GCash receipt"
+                                                    className="max-h-56 w-full rounded-md border border-[#d8cdc3] object-contain bg-white"
+                                                />
                                                 <a
-                                                    href={`/storage/${selectedBill.billingReceiptPath}`}
+                                                    href={receiptUrl(selectedBill.billingReceiptPath) ?? '#'}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="text-[11px] font-semibold text-[#5f7f95] underline"
                                                 >
-                                                    View current receipt
+                                                    Open receipt in new tab
                                                 </a>
-                                            ) : null}
+                                            </div>
+                                        ) : null}
                                     </div>
                                 ) : null}
                             </div>
@@ -1095,14 +1137,21 @@ export default function Billing({
                                     </span>
                                 ) : null}
                                 {selectedHistoryBill.billing_receipt_path ? (
-                                    <a
-                                        href={`/storage/${selectedHistoryBill.billing_receipt_path}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="rounded-full bg-[#dfe6ec] px-2 py-0.5 font-semibold text-[#5f7f95] underline"
-                                    >
-                                        View receipt
-                                    </a>
+                                    <div className="w-full space-y-2 rounded-md border border-[#d8cdc3] bg-white p-2">
+                                        <img
+                                            src={receiptUrl(selectedHistoryBill.billing_receipt_path) ?? ''}
+                                            alt="Saved GCash receipt"
+                                            className="max-h-72 w-full rounded-md object-contain"
+                                        />
+                                        <a
+                                            href={receiptUrl(selectedHistoryBill.billing_receipt_path) ?? '#'}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-block rounded-full bg-[#dfe6ec] px-2 py-0.5 font-semibold text-[#5f7f95] underline"
+                                        >
+                                            Open receipt in new tab
+                                        </a>
+                                    </div>
                                 ) : null}
                                 <span className="rounded-full bg-[#e8dfd6] px-2 py-0.5 font-semibold text-[#5a6d7c]">
                                     Paid
