@@ -12,9 +12,10 @@ class RegisterResponse implements RegisterResponseContract
      */
     public function toResponse($request): RedirectResponse
     {
-        return redirect()->route('auth.2fa-verify')->with(
-            'status',
-            'We sent a verification code to your email.'
-        );
+        // Registration 2FA flow is disabled for now.
+        // Keep this redirect commented for future re-enable work.
+        // return redirect()->route('auth.2fa-verify')->with('status', 'We sent a verification code to your email.');
+
+        return redirect()->route('dashboard');
     }
 }
