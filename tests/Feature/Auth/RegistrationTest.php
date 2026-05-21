@@ -1,8 +1,5 @@
 <?php
 
-use App\Jobs\SendOtpVerificationEmail;
-use App\Models\OtpCode;
-use Illuminate\Support\Facades\Queue;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -16,8 +13,6 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register', function () {
-    Queue::fake();
-
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'contact_number' => '09123456789',
@@ -27,9 +22,7 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('auth.2fa-verify', absolute: false));
-    Queue::assertPushed(SendOtpVerificationEmail::class);
-    expect(OtpCode::query()->where('purpose', 'registration')->exists())->toBeTrue();
+    $response->assertRedirect(route('dashboard', absolute: false));
 });
 
 test('registration contact number must be exactly 11 digits', function () {
