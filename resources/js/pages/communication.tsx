@@ -309,7 +309,7 @@ export default function Communication({
                                 : 'border border-[#c9bbb0] bg-white text-[#3f5667]'
                         }`}
                     >
-                        Send Message to All
+                        Broadcast to All
                     </button>
                     <button
                         type="button"
@@ -456,7 +456,7 @@ export default function Communication({
                                 value={broadcastDraft}
                                 onChange={(event) => setBroadcastDraft(event.target.value)}
                                 rows={8}
-                                placeholder="Write broadcast message for all tenants..."
+                                placeholder="Write broadcast message to all tenants..."
                                 className="w-full rounded-md border border-[#d8cdc3] bg-[#f9f8f3] p-3 text-xs text-[#3e5262] outline-none"
                             />
 

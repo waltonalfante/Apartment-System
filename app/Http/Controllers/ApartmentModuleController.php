@@ -805,6 +805,9 @@ class ApartmentModuleController extends Controller
                         'billing_month_year' => $tenant->billing_month_year,
                         'billing_electricity' => $tenant->billing_electricity,
                         'billing_water' => $tenant->billing_water,
+                        'billing_paid_amount' => $tenant->billing_paid_amount,
+                        'billing_payment_method' => $tenant->billing_payment_method,
+                        'billing_receipt_path' => $tenant->billing_receipt_path,
                     ];
                 }),
             'billingHistory' => Tenant::query()
@@ -823,6 +826,9 @@ class ApartmentModuleController extends Controller
                         'billing_month_year' => $tenant->billing_month_year,
                         'billing_electricity' => $tenant->billing_electricity,
                         'billing_water' => $tenant->billing_water,
+                        'billing_paid_amount' => $tenant->billing_paid_amount,
+                        'billing_payment_method' => $tenant->billing_payment_method,
+                        'billing_receipt_path' => $tenant->billing_receipt_path,
                         'downpayment' => $tenant->downpayment,
                         'payment_type' => $tenant->payment_type,
                         'gcash_number' => $tenant->gcash_number,
@@ -838,19 +844,53 @@ class ApartmentModuleController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => ['required', 'in:Paid,Pending,Overdue'],
             'due_date' => ['nullable', 'date'],
             'month_year' => ['nullable', 'string', 'max:50'],
             'electricity' => ['nullable', 'numeric', 'min:0'],
             'water' => ['nullable', 'numeric', 'min:0'],
+            'amount_paid' => ['nullable', 'numeric', 'min:0'],
+            'payment_method' => ['required', 'in:cash,gcash'],
+            'receipt' => ['nullable', 'file', 'image', 'max:10240'],
         ]);
 
+        $electricity = (float) ($validated['electricity'] ?? $tenant->billing_electricity ?? 0);
+        $water = (float) ($validated['water'] ?? $tenant->billing_water ?? 0);
+        $totalDue = 6000 + $electricity + $water;
+        $paidAmount = max(0, (float) ($validated['amount_paid'] ?? 0));
+        $receiptPath = $tenant->billing_receipt_path;
+
+        if ($validated['payment_method'] === 'gcash' && ! $request->hasFile('receipt') && ! $receiptPath) {
+            return back()->withInput()->with('error', 'GCash payments require a receipt image.');
+        }
+
+        if ($validated['payment_method'] === 'cash') {
+            $receiptPath = null;
+        }
+
+        if ($validated['payment_method'] === 'gcash' && $request->hasFile('receipt')) {
+            $receiptFile = $request->file('receipt');
+            $receiptName = sprintf(
+                'billing_%d_%s.%s',
+                $tenant->id,
+                now()->format('YmdHis'),
+                $receiptFile->getClientOriginalExtension() ?: 'jpg'
+            );
+            $receiptPath = $receiptFile->storeAs('billing-receipts', $receiptName, 'public');
+        }
+
+        $status = $paidAmount >= $totalDue
+            ? 'Paid'
+            : ($paidAmount > 0 ? 'Partial' : 'Pending');
+
         $tenant->update([
-            'billing_status' => $validated['status'],
+            'billing_status' => $status,
             'billing_due_date' => $validated['due_date'] ?? $tenant->billing_due_date,
             'billing_month_year' => $validated['month_year'] ?? $tenant->billing_month_year,
-            'billing_electricity' => $validated['electricity'] ?? $tenant->billing_electricity ?? 0,
-            'billing_water' => $validated['water'] ?? $tenant->billing_water ?? 0,
+            'billing_electricity' => $electricity,
+            'billing_water' => $water,
+            'billing_paid_amount' => min($paidAmount, $totalDue),
+            'billing_payment_method' => $validated['payment_method'],
+            'billing_receipt_path' => $receiptPath,
         ]);
 
         return back()->with('success', "Billing updated for {$tenant->name}.");
