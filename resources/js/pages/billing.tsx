@@ -17,6 +17,7 @@ type Bill = {
     billingPaidAmount?: number;
     billingPaymentMethod?: 'cash' | 'gcash' | null;
     billingReceiptPath?: string | null;
+    accountCredit?: number;
     status: 'Paid' | 'Partial' | 'Pending' | 'Overdue';
     dueDate: string;
 };
@@ -38,6 +39,7 @@ type TenantEntry = {
     billing_paid_amount?: number | string;
     billing_payment_method?: 'cash' | 'gcash' | null;
     billing_receipt_path?: string | null;
+    account_credit?: number | string;
 };
 
 type BillingHistoryEntry = {
@@ -231,6 +233,13 @@ export default function Billing({
     );
 
     const [localBillingHistory, setLocalBillingHistory] = useState<BillingHistoryEntry[]>(billingHistory);
+    const [localTenantCredits, setLocalTenantCredits] = useState<Record<number, number>>(() => {
+        const map: Record<number, number> = {};
+        tenants.forEach((t) => {
+            if (t.id) map[t.id] = Number(t.account_credit ?? 0);
+        });
+        return map;
+    });
 
     const paidHistoryBills = useMemo(
         () => buildPaidHistoryBills(localBillingHistory),
@@ -423,6 +432,15 @@ export default function Billing({
     }, [billList, selectedBill]);
 
     useEffect(() => {
+        // keep local tenant credits in sync when server props change
+        const map: Record<number, number> = {};
+        tenants.forEach((t) => {
+            if (t.id) map[t.id] = Number(t.account_credit ?? 0);
+        });
+        setLocalTenantCredits(map);
+    }, [tenants]);
+
+    useEffect(() => {
         if (!selectedHistoryBill) {
             return;
         }
@@ -461,7 +479,7 @@ export default function Billing({
 
         setEditElectricity(String(parseAmount(selectedBill.electricity)));
         setEditWater(String(parseAmount(selectedBill.water)));
-        setEditPaidAmount(String(Number(selectedBill.billingPaidAmount ?? 0)));
+        setEditPaidAmount('');
         setEditPaymentMethod(selectedBill.billingPaymentMethod ?? selectedBill.paymentType ?? 'cash');
         setEditReceiptFile(null);
     }, [selectedBill]);
@@ -514,6 +532,8 @@ export default function Billing({
         const waterValue = Number(editWater) || 0;
         const totalValue = rentValue + electricityValue + waterValue;
         const paidValue = Number(editPaidAmount) || 0;
+        const previousPaidValue = Number(selectedBill.billingPaidAmount ?? 0);
+        const cumulativePaidValue = Math.min(previousPaidValue + paidValue, totalValue);
 
         const formData = new FormData();
         formData.append('_method', 'PATCH');
@@ -531,7 +551,7 @@ export default function Billing({
         router.post(`/billing/tenants/${selectedBill.tenantId}`, formData, {
             preserveScroll: true,
             onSuccess: () => {
-                const isFullyPaid = paidValue >= totalValue;
+                const isFullyPaid = cumulativePaidValue >= totalValue;
 
                 if (isFullyPaid) {
                     // create a history entry for immediate UI feedback
@@ -544,7 +564,7 @@ export default function Billing({
                         billing_electricity: electricityValue,
                         billing_water: waterValue,
                         downpayment: selectedBill.downpayment,
-                        billing_paid_amount: paidValue,
+                        billing_paid_amount: cumulativePaidValue,
                         billing_payment_method: editPaymentMethod,
                         billing_receipt_path: editPaymentMethod === 'gcash'
                             ? (editReceiptFile ? URL.createObjectURL(editReceiptFile) : selectedBill.billingReceiptPath ?? null)
@@ -554,6 +574,18 @@ export default function Billing({
                     };
 
                     setLocalBillingHistory((current) => [newHistory, ...current]);
+
+                    // if there was an overpay, add it to local tenant credits
+                    const previousPaid = Number(selectedBill.billingPaidAmount ?? 0);
+                    const remaining = Math.max(totalValue - previousPaid, 0);
+                    const overpayLocal = Math.max(paidValue - remaining, 0);
+                    if (overpayLocal > 0) {
+                        setLocalTenantCredits((cur) => ({
+                            ...cur,
+                            [selectedBill.tenantId]: (cur[selectedBill.tenantId] ?? 0) + overpayLocal,
+                        }));
+                        setNotice(`Bill fully paid. P${overpayLocal.toLocaleString()} credited to tenant account.`);
+                    }
 
                     // remove from the active bill list
                     setBillList((current) => current.filter((b) => b.tenantId !== selectedBill.tenantId));
@@ -566,9 +598,9 @@ export default function Billing({
                                     electricity: `P ${electricityValue.toLocaleString()}`,
                                     water: `P ${waterValue.toLocaleString()}`,
                                     total: `P ${totalValue.toLocaleString()}`,
-                                    billingPaidAmount: paidValue,
+                                    billingPaidAmount: cumulativePaidValue,
                                     billingPaymentMethod: editPaymentMethod,
-                                    status: paidValue > 0 ? 'Partial' : 'Pending',
+                                    status: cumulativePaidValue > 0 ? 'Partial' : 'Pending',
                                 }
                                 : bill,
                         ),
