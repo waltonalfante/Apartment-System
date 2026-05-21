@@ -728,18 +728,11 @@ export default function Billing({
                     <div className="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            onClick={() => setIsAddPayeeOpen(true)}
-                            className="rounded-md bg-[#5f7f95] px-6 py-2 text-xs font-semibold text-white"
-                        >
-                            Add Payee
-                        </button>
-                        <button
-                            type="button"
                             onClick={() => {
                                 setIsHistoryOpen((current) => !current);
                                 setHistoryPage(1);
                             }}
-                            className="rounded-md bg-[#5f7f95] px-6 py-2 text-xs font-semibold text-white"
+                            className="rounded-md bg-[#f0b01f] px-6 py-2 text-xs font-semibold text-[#312400]"
                         >
                             View History
                         </button>
@@ -792,19 +785,10 @@ export default function Billing({
                                                 <button
                                                     type="button"
                                                     onClick={() => setSelectedBill(bill)}
-                                                    className="whitespace-nowrap rounded-md bg-[#5f7f95] px-2 py-1 text-[10px] font-semibold text-white"
+                                                    className="whitespace-nowrap rounded-md bg-[#f0b01f] px-2 py-1 text-[10px] font-semibold text-[#312400]"
                                                 >
                                                     View
                                                 </button>
-                                                {resolveBillStatus(bill) !== 'Paid' ? (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => cycleBillStatus(bill)}
-                                                        className="whitespace-nowrap rounded-md bg-[#f0b01f] px-2 py-1 text-[10px] font-semibold text-[#312400]"
-                                                    >
-                                                        Update Payment
-                                                    </button>
-                                                ) : null}
                                             </div>
                                         </td>
                                     </tr>
