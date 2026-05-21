@@ -461,7 +461,7 @@ export default function Billing({
 
         setEditElectricity(String(parseAmount(selectedBill.electricity)));
         setEditWater(String(parseAmount(selectedBill.water)));
-        setEditPaidAmount(String(Number(selectedBill.billingPaidAmount ?? 0)));
+        setEditPaidAmount('');
         setEditPaymentMethod(selectedBill.billingPaymentMethod ?? selectedBill.paymentType ?? 'cash');
         setEditReceiptFile(null);
     }, [selectedBill]);
@@ -514,6 +514,8 @@ export default function Billing({
         const waterValue = Number(editWater) || 0;
         const totalValue = rentValue + electricityValue + waterValue;
         const paidValue = Number(editPaidAmount) || 0;
+        const previousPaidValue = Number(selectedBill.billingPaidAmount ?? 0);
+        const cumulativePaidValue = Math.min(previousPaidValue + paidValue, totalValue);
 
         const formData = new FormData();
         formData.append('_method', 'PATCH');
@@ -531,7 +533,7 @@ export default function Billing({
         router.post(`/billing/tenants/${selectedBill.tenantId}`, formData, {
             preserveScroll: true,
             onSuccess: () => {
-                const isFullyPaid = paidValue >= totalValue;
+                const isFullyPaid = cumulativePaidValue >= totalValue;
 
                 if (isFullyPaid) {
                     // create a history entry for immediate UI feedback
@@ -544,7 +546,7 @@ export default function Billing({
                         billing_electricity: electricityValue,
                         billing_water: waterValue,
                         downpayment: selectedBill.downpayment,
-                        billing_paid_amount: paidValue,
+                        billing_paid_amount: cumulativePaidValue,
                         billing_payment_method: editPaymentMethod,
                         billing_receipt_path: editPaymentMethod === 'gcash'
                             ? (editReceiptFile ? URL.createObjectURL(editReceiptFile) : selectedBill.billingReceiptPath ?? null)
@@ -566,9 +568,9 @@ export default function Billing({
                                     electricity: `P ${electricityValue.toLocaleString()}`,
                                     water: `P ${waterValue.toLocaleString()}`,
                                     total: `P ${totalValue.toLocaleString()}`,
-                                    billingPaidAmount: paidValue,
+                                    billingPaidAmount: cumulativePaidValue,
                                     billingPaymentMethod: editPaymentMethod,
-                                    status: paidValue > 0 ? 'Partial' : 'Pending',
+                                    status: cumulativePaidValue > 0 ? 'Partial' : 'Pending',
                                 }
                                 : bill,
                         ),
