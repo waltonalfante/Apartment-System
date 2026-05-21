@@ -2,14 +2,14 @@
 
 namespace App\Jobs;
 
-use App\Mail\TenantMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use App\Services\ResendMailer;
+use Illuminate\Support\Facades\View;
 
 class SendTenantMessageEmail implements ShouldQueue
 {
@@ -38,8 +38,20 @@ class SendTenantMessageEmail implements ShouldQueue
     public function handle(): void
     {
         try {
-            Mail::to($this->tenantEmail)
-                ->send(new TenantMessage($this->subject, $this->message));
+            $html = View::make('emails.tenant_message', [
+                'bodyText' => $this->message,
+            ])->render();
+
+            $sent = ResendMailer::sendHtml(
+                $this->tenantEmail,
+                '',
+                $this->subject,
+                $html,
+            );
+
+            if (! $sent) {
+                throw new \RuntimeException('Resend failed to send tenant message email.');
+            }
         } catch (\Exception $exception) {
             Log::error('Failed to send tenant message email.', [
                 'tenant_email' => $this->tenantEmail,
