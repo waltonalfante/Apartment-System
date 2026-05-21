@@ -14,7 +14,10 @@ type Bill = {
     downpayment: number;
     paymentType: 'cash' | 'gcash';
     gcashNumber?: string | null;
-    status: 'Paid' | 'Pending' | 'Overdue';
+    billingPaidAmount?: number;
+    billingPaymentMethod?: 'cash' | 'gcash' | null;
+    billingReceiptPath?: string | null;
+    status: 'Paid' | 'Partial' | 'Pending' | 'Overdue';
     dueDate: string;
 };
 
@@ -27,11 +30,14 @@ type TenantEntry = {
     downpayment?: number | string;
     payment_type?: 'cash' | 'gcash';
     gcash_number?: string | null;
-    billing_status?: 'Paid' | 'Pending' | 'Overdue';
+    billing_status?: 'Paid' | 'Partial' | 'Pending' | 'Overdue';
     billing_due_date?: string | null;
     billing_month_year?: string | null;
     billing_electricity?: number | string;
     billing_water?: number | string;
+    billing_paid_amount?: number | string;
+    billing_payment_method?: 'cash' | 'gcash' | null;
+    billing_receipt_path?: string | null;
 };
 
 type BillingHistoryEntry = {
@@ -43,6 +49,9 @@ type BillingHistoryEntry = {
     billing_electricity?: number | string;
     billing_water?: number | string;
     downpayment?: number | string;
+    billing_paid_amount?: number | string;
+    billing_payment_method?: 'cash' | 'gcash' | null;
+    billing_receipt_path?: string | null;
     payment_type?: 'cash' | 'gcash';
     gcash_number?: string | null;
 };
@@ -75,6 +84,9 @@ const buildBillsFromTenants = (
         downpayment: Number(tenant.downpayment ?? 0),
         paymentType: tenant.payment_type ?? 'cash',
         gcashNumber: tenant.gcash_number ?? null,
+        billingPaidAmount: Number(tenant.billing_paid_amount ?? 0),
+        billingPaymentMethod: tenant.billing_payment_method ?? null,
+        billingReceiptPath: tenant.billing_receipt_path ?? null,
         status: tenant.billing_status ?? 'Pending',
         dueDate: tenant.billing_due_date || nextDueDate(tenant.check_in_date),
     }));
@@ -95,6 +107,9 @@ const buildPaidHistoryBills = (history: BillingHistoryEntry[]): Bill[] =>
             water: `P ${water.toLocaleString()}`,
             total: `P ${total.toLocaleString()}`,
             downpayment: Number(item.downpayment ?? 0),
+            billingPaidAmount: Number(item.billing_paid_amount ?? 0),
+            billingPaymentMethod: item.billing_payment_method ?? item.payment_type ?? 'cash',
+            billingReceiptPath: item.billing_receipt_path ?? null,
             paymentType: item.payment_type ?? 'cash',
             gcashNumber: item.gcash_number ?? null,
             status: 'Paid',
@@ -104,6 +119,7 @@ const buildPaidHistoryBills = (history: BillingHistoryEntry[]): Bill[] =>
 
 const statusStyles: Record<Bill['status'], string> = {
     Paid: 'bg-[#2ca94e] text-white',
+    Partial: 'bg-[#f7a928] text-[#2c1800]',
     Pending: 'bg-[#f0b01f] text-[#312400]',
     Overdue: 'bg-[#ef4242] text-white',
 };
@@ -137,8 +153,8 @@ const buildNextDueDate = (checkInDate?: string | null) => {
 };
 
 const resolveBillStatus = (bill: Bill): Bill['status'] => {
-    if (bill.status === 'Paid') {
-        return 'Paid';
+    if (bill.status === 'Paid' || bill.status === 'Partial') {
+        return bill.status;
     }
 
     const dueDate = new Date(bill.dueDate);
@@ -178,6 +194,9 @@ export default function Billing({
     const [historyPage, setHistoryPage] = useState(1);
     const [historySearch, setHistorySearch] = useState('');
     const [selectedPayeeKey, setSelectedPayeeKey] = useState('');
+    const [editPaidAmount, setEditPaidAmount] = useState('');
+    const [editPaymentMethod, setEditPaymentMethod] = useState<'cash' | 'gcash'>('cash');
+    const [editReceiptFile, setEditReceiptFile] = useState<File | null>(null);
     const [newPayee, setNewPayee] = useState({
         tenant: '',
         room: '',
@@ -201,7 +220,9 @@ export default function Billing({
 
                 return activeFilter === 'All'
                     ? true
-                    : displayStatus === activeFilter;
+                    : activeFilter === 'Pending'
+                        ? displayStatus === 'Pending' || displayStatus === 'Partial'
+                        : displayStatus === activeFilter;
             }),
         [activeFilter, billList],
     );
@@ -225,7 +246,10 @@ export default function Billing({
             .filter((bill) => resolveBillStatus(bill) === 'Paid')
             .reduce((sum, bill) => sum + parseAmount(bill.total), 0);
         const pending = allBills
-            .filter((bill) => resolveBillStatus(bill) === 'Pending')
+            .filter((bill) => {
+                const status = resolveBillStatus(bill);
+                return status === 'Pending' || status === 'Partial';
+            })
             .reduce((sum, bill) => sum + parseAmount(bill.total), 0);
         const overdue = allBills
             .filter((bill) => resolveBillStatus(bill) === 'Overdue')
@@ -252,48 +276,11 @@ export default function Billing({
             overdueTenants,
             collectionRate,
         };
-    }, [billList]);
+    }, [allBills]);
 
     const cycleBillStatus = (targetBill: Bill) => {
-        if (resolveBillStatus(targetBill) === 'Paid') {
-            setNotice(`Status is locked for ${targetBill.tenant}.`);
-            return;
-        }
-
-        const nextStatus: Bill['status'] =
-            targetBill.status === 'Pending'
-                ? 'Paid'
-                : targetBill.status === 'Paid'
-                  ? 'Overdue'
-                  : 'Pending';
-
-        setBillList((currentBills) =>
-            nextStatus === 'Paid'
-                ? currentBills.filter((bill) => bill.tenantId !== targetBill.tenantId)
-                : currentBills.map((bill) =>
-                    bill.tenantId === targetBill.tenantId
-                        ? { ...bill, status: nextStatus }
-                        : bill,
-                ),
-        );
-
-        if (nextStatus === 'Paid') {
-            setSelectedBill(null);
-        }
-
-        router.patch(
-            `/billing/tenants/${targetBill.tenantId}`,
-            {
-                status: nextStatus,
-                due_date: targetBill.dueDate,
-                month_year: targetBill.monthYear,
-                electricity: parseAmount(targetBill.electricity),
-                water: parseAmount(targetBill.water),
-            },
-            { preserveScroll: true },
-        );
-
-        setNotice(`Status updated for ${targetBill.tenant}: ${nextStatus}.`);
+        setSelectedBill(targetBill);
+        setNotice(`Update payment details for ${targetBill.tenant}.`);
     };
 
     const addPayee = () => {
@@ -356,6 +343,9 @@ export default function Billing({
                     billing_electricity: item.billing_electricity,
                     billing_water: item.billing_water,
                     downpayment: item.downpayment,
+                    billing_paid_amount: item.billing_paid_amount,
+                    billing_payment_method: item.billing_payment_method,
+                    billing_receipt_path: item.billing_receipt_path,
                     payment_type: item.payment_type,
                     gcash_number: item.gcash_number,
                     billing_month_year: item.billing_month_year,
@@ -426,11 +416,17 @@ export default function Billing({
         if (!selectedBill) {
             setEditElectricity('');
             setEditWater('');
+            setEditPaidAmount('');
+            setEditPaymentMethod('cash');
+            setEditReceiptFile(null);
             return;
         }
 
         setEditElectricity(String(parseAmount(selectedBill.electricity)));
         setEditWater(String(parseAmount(selectedBill.water)));
+        setEditPaidAmount(String(Number(selectedBill.billingPaidAmount ?? 0)));
+        setEditPaymentMethod(selectedBill.billingPaymentMethod ?? selectedBill.paymentType ?? 'cash');
+        setEditReceiptFile(null);
     }, [selectedBill]);
 
     const applyBillEdits = () => {
@@ -458,16 +454,65 @@ export default function Billing({
         router.patch(
             `/billing/tenants/${selectedBill.tenantId}`,
             {
-                status: selectedBill.status,
                 due_date: selectedBill.dueDate,
                 month_year: selectedBill.monthYear,
                 electricity: electricityValue,
                 water: waterValue,
+                amount_paid: Number(editPaidAmount) || 0,
+                payment_method: editPaymentMethod,
             },
             { preserveScroll: true },
         );
 
         setNotice(`Billing updated for ${selectedBill.tenant}.`);
+    };
+
+    const applyPaymentUpdate = () => {
+        if (!selectedBill) {
+            return;
+        }
+
+        const rentValue = parseAmount(selectedBill.rent);
+        const electricityValue = Number(editElectricity) || 0;
+        const waterValue = Number(editWater) || 0;
+        const totalValue = rentValue + electricityValue + waterValue;
+        const paidValue = Number(editPaidAmount) || 0;
+
+        const formData = new FormData();
+        formData.append('_method', 'PATCH');
+        formData.append('due_date', selectedBill.dueDate);
+        formData.append('month_year', selectedBill.monthYear);
+        formData.append('electricity', String(electricityValue));
+        formData.append('water', String(waterValue));
+        formData.append('amount_paid', String(paidValue));
+        formData.append('payment_method', editPaymentMethod);
+
+        if (editPaymentMethod === 'gcash' && editReceiptFile) {
+            formData.append('receipt', editReceiptFile);
+        }
+
+        router.post(`/billing/tenants/${selectedBill.tenantId}`, formData, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setBillList((current) =>
+                    current.map((bill) =>
+                        bill.tenantId === selectedBill.tenantId
+                            ? {
+                                ...bill,
+                                electricity: `P ${electricityValue.toLocaleString()}`,
+                                water: `P ${waterValue.toLocaleString()}`,
+                                total: `P ${totalValue.toLocaleString()}`,
+                                billingPaidAmount: paidValue,
+                                billingPaymentMethod: editPaymentMethod,
+                                status: paidValue >= totalValue ? 'Paid' : paidValue > 0 ? 'Partial' : 'Pending',
+                            }
+                            : bill,
+                    ),
+                );
+                setSelectedBill(null);
+                setNotice(`Payment updated for ${selectedBill.tenant}.`);
+            },
+        });
     };
 
     return (
@@ -485,7 +530,7 @@ export default function Billing({
                 </div>
             ) : null}
 
-            {notice && !flash?.success && !flash?.error ? (
+            { notice && !flash?.success && !flash?.error ? (
                 <div className="mb-4 rounded-md bg-[#2ca94e] px-3 py-2 text-xs font-semibold text-white">
                     {notice}
                 </div>
@@ -659,7 +704,7 @@ export default function Billing({
                                                         onClick={() => cycleBillStatus(bill)}
                                                         className="whitespace-nowrap rounded-md bg-[#f0b01f] px-2 py-1 text-[10px] font-semibold text-[#312400]"
                                                     >
-                                                        Change Status
+                                                        Update Payment
                                                     </button>
                                                 ) : null}
                                             </div>
@@ -852,7 +897,7 @@ export default function Billing({
                                         {toPeso(
                                             Math.max(
                                                 parseAmount(selectedBill.total) -
-                                                    selectedBill.downpayment,
+                                                    Number(selectedBill.billingPaidAmount ?? 0),
                                                 0,
                                             ),
                                         )}
@@ -870,16 +915,64 @@ export default function Billing({
                                     </span>
                                 ) : null}
                                 <span className="rounded-full bg-[#e8dfd6] px-2 py-0.5 font-semibold text-[#5a6d7c]">
-                                    {selectedBill.downpayment >=
-                                    parseAmount(selectedBill.total)
+                                    {Number(selectedBill.billingPaidAmount ?? 0) >= parseAmount(selectedBill.total)
                                         ? 'Full'
-                                        : selectedBill.downpayment > 0
+                                        : Number(selectedBill.billingPaidAmount ?? 0) > 0
                                           ? 'Partial'
                                           : 'Unpaid'}
                                 </span>
                                 <span className="rounded-full bg-[#f0e8de] px-2 py-0.5 font-semibold text-[#5a6d7c]">
                                     {selectedBill.status}
                                 </span>
+                            </div>
+
+                            <div className="rounded-md border border-[#d8cdc3] bg-[#fffdf9] px-3 py-2 text-xs text-[#465a69]">
+                                <div className="flex items-center justify-between gap-3">
+                                    <span>Amount Paid</span>
+                                    <input
+                                        value={editPaidAmount}
+                                        onChange={(event) => setEditPaidAmount(event.target.value)}
+                                        className="h-8 w-28 rounded-md border border-[#dbd2c8] bg-white px-2 text-right text-xs outline-none"
+                                        inputMode="decimal"
+                                    />
+                                </div>
+                                <div className="mt-2 flex items-center justify-between gap-3">
+                                    <span>Payment Method</span>
+                                    <select
+                                        value={editPaymentMethod}
+                                        onChange={(event) => {
+                                            setEditPaymentMethod(event.target.value as 'cash' | 'gcash');
+                                            if (event.target.value === 'cash') {
+                                                setEditReceiptFile(null);
+                                            }
+                                        }}
+                                        className="h-8 w-28 rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none"
+                                    >
+                                        <option value="cash">Cash</option>
+                                        <option value="gcash">GCash</option>
+                                    </select>
+                                </div>
+                                {editPaymentMethod === 'gcash' ? (
+                                    <div className="mt-2 flex flex-col gap-1">
+                                        <span className="font-semibold text-[#2f4e64]">Receipt Image</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(event) => setEditReceiptFile(event.target.files?.[0] ?? null)}
+                                            className="block w-full text-[11px] text-[#465a69]"
+                                        />
+                                            {selectedBill.billingReceiptPath ? (
+                                                <a
+                                                    href={`/storage/${selectedBill.billingReceiptPath}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="text-[11px] font-semibold text-[#5f7f95] underline"
+                                                >
+                                                    View current receipt
+                                                </a>
+                                            ) : null}
+                                    </div>
+                                ) : null}
                             </div>
                         </div>
                         <div className="mt-4 flex justify-end gap-2">
@@ -888,7 +981,14 @@ export default function Billing({
                                 onClick={applyBillEdits}
                                 className="rounded-md bg-[#5f7f95] px-4 py-1.5 text-xs font-semibold text-white"
                             >
-                                Confirm
+                                Update Billing
+                            </button>
+                            <button
+                                type="button"
+                                onClick={applyPaymentUpdate}
+                                className="rounded-md bg-[#2ca94e] px-4 py-1.5 text-xs font-semibold text-white"
+                            >
+                                Update Payment
                             </button>
                             <button
                                 type="button"
@@ -966,12 +1066,18 @@ export default function Billing({
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between">
+                                    <span>Paid Amount</span>
+                                    <span className="font-semibold">
+                                        {toPeso(Number(selectedHistoryBill.billing_paid_amount ?? 0))}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between">
                                     <span>Balance Due</span>
                                     <span className="font-semibold">
                                         {toPeso(
                                             Math.max(
                                                 6000 + Number(selectedHistoryBill.billing_electricity ?? 0) + Number(selectedHistoryBill.billing_water ?? 0) -
-                                                    Number(selectedHistoryBill.downpayment ?? 0),
+                                                    Number(selectedHistoryBill.billing_paid_amount ?? 0),
                                                 0,
                                             ),
                                         )}
@@ -981,12 +1087,22 @@ export default function Billing({
 
                             <div className="flex flex-wrap gap-2 text-[11px] text-[#465a69]">
                                 <span className="rounded-full bg-[#dfe6ec] px-2 py-0.5 font-semibold text-[#3f5667]">
-                                    {selectedHistoryBill.payment_type === 'gcash' ? 'GCash' : 'Cash'}
+                                    {selectedHistoryBill.billing_payment_method === 'gcash' || selectedHistoryBill.payment_type === 'gcash' ? 'GCash' : 'Cash'}
                                 </span>
-                                {selectedHistoryBill.payment_type === 'gcash' ? (
+                                {(selectedHistoryBill.billing_payment_method === 'gcash' || selectedHistoryBill.payment_type === 'gcash') ? (
                                     <span className="rounded-full bg-[#dfe6ec] px-2 py-0.5 font-semibold text-[#3f5667]">
                                         {selectedHistoryBill.gcash_number || 'No GCash number'}
                                     </span>
+                                ) : null}
+                                {selectedHistoryBill.billing_receipt_path ? (
+                                    <a
+                                        href={`/storage/${selectedHistoryBill.billing_receipt_path}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="rounded-full bg-[#dfe6ec] px-2 py-0.5 font-semibold text-[#5f7f95] underline"
+                                    >
+                                        View receipt
+                                    </a>
                                 ) : null}
                                 <span className="rounded-full bg-[#e8dfd6] px-2 py-0.5 font-semibold text-[#5a6d7c]">
                                     Paid
