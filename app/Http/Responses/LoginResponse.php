@@ -4,6 +4,7 @@ namespace App\Http\Responses;
 
 use Illuminate\Http\RedirectResponse;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use App\Services\OtpService;
 
 class LoginResponse implements LoginResponseContract
 {
@@ -12,12 +13,16 @@ class LoginResponse implements LoginResponseContract
      */
     public function toResponse($request): RedirectResponse
     {
-        // 2FA login flow is disabled for now.
-        // Keep this block commented for future re-enable work.
-        // $user = $request->user();
-        // if ($user) {
-        //     app(OtpService::class)->issue($user, 'login', ['source' => 'web-login'], 'Your Apartment Verification Code', 'Verification Code');
-        // }
+        // Enable 2FA login flow: issue a login OTP after successful login
+        $user = $request->user();
+        if ($user) {
+            try {
+                app(OtpService::class)->issue($user, 'login', ['source' => 'web-login'], 'Your Apartment Verification Code', 'Verification Code');
+            } catch (\Throwable $e) {
+                // Log and continue to avoid blocking login if email queueing fails
+                \Log::error('Failed to issue 2FA code on login: '.$e->getMessage(), ['user_id' => $user->id]);
+            }
+        }
 
         return redirect()->route('dashboard');
     }

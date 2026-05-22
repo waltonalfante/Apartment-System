@@ -20,11 +20,10 @@ class CheckTwoFactor
             return $next($request);
         }
 
-        // 2FA redirect is disabled for now.
-        // Keep this block commented for future re-enable work.
-        // if ($request->user() && $request->user()->login_code) {
-        //     return redirect()->route('auth.2fa-verify');
-        // }
+        // If the user currently has a pending login code, redirect to 2FA verification.
+        if ($request->user() && $request->user()->login_code) {
+            return redirect()->route('auth.2fa-verify');
+        }
 
         return $next($request);
     }
