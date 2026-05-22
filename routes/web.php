@@ -19,17 +19,16 @@ Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-// 2FA routes are disabled for now.
-// Keep this block commented for future re-enable work.
-// Route::middleware(['auth'])->group(function () {
-//     Route::post('auth/2fa/send', [AuthController::class, 'sendTwoFactorCode'])->name('auth.2fa.send');
-//     Route::post('auth/2fa/verify', [AuthController::class, 'verifyTwoFactorCode'])->name('auth.2fa.verify');
-//     Route::get('auth/2fa-verify', function () {
-//         return inertia('auth/two-factor-verify', [
-//             'userEmail' => auth()->user()?->email,
-//         ]);
-//     })->name('auth.2fa-verify');
-// });
+// 2FA routes: enable two-factor challenge, send and verify endpoints.
+Route::middleware(['auth'])->group(function () {
+    Route::post('auth/2fa/send', [AuthController::class, 'sendTwoFactorCode'])->name('auth.2fa.send');
+    Route::post('auth/2fa/verify', [AuthController::class, 'verifyTwoFactorCode'])->name('auth.2fa.verify');
+    Route::get('auth/2fa-verify', function () {
+        return inertia('auth/two-factor-verify', [
+            'userEmail' => auth()->user()?->email,
+        ]);
+    })->name('auth.2fa-verify');
+});
 
 
 // Temporary protected diagnostics route for debugging Render issues.
