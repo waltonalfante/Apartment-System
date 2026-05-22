@@ -25,18 +25,16 @@ class AuthController extends Controller
             ]);
         }
 
-        // Manual 2FA sending is disabled for now.
-        // Keep this block commented for future re-enable work.
-        // try {
-        //     $otpService->issue($user, 'login', ['source' => 'manual-send'], 'Your Apartment Verification Code', 'Verification Code');
-        //     \Log::info('AuthController: 2FA email sent', ['user_id' => $user->id, 'email' => $user->email]);
-        // } catch (\Exception $e) {
-        //     \Log::error('2FA email failed: ' . $e->getMessage());
-        //     return response()->json(['error' => 'Failed to send code'], 500);
-        // }
+        try {
+            $otpService->issue($user, 'login', ['source' => 'manual-send'], 'Your Apartment Verification Code', 'Verification Code');
+            \Log::info('AuthController: 2FA email sent', ['user_id' => $user->id, 'email' => $user->email]);
+        } catch (\Throwable $e) {
+            \Log::error('2FA email failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to send code'], 500);
+        }
 
         return response()->json([
-            'message' => 'Two-factor authentication is disabled.',
+            'message' => 'Two-factor code sent.',
             'email' => $user->email,
         ]);
     }
@@ -58,8 +56,14 @@ class AuthController extends Controller
             ]);
         }
 
+        $verified = app(OtpService::class)->verify($user, 'login', $request->input('code'));
+
+        if (! $verified) {
+            return response()->json(['error' => 'Invalid code'], 422);
+        }
+
         return response()->json([
-            'message' => 'Two-factor authentication is disabled.',
+            'message' => 'Two-factor verified.',
             'redirect' => route('dashboard'),
         ]);
     }

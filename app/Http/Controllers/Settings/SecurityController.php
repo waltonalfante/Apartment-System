@@ -26,7 +26,7 @@ class SecurityController extends Controller implements HasMiddleware
     public function edit(TwoFactorAuthenticationRequest $request): Response
     {
         $props = [
-            'canManageTwoFactor' => false,
+            'canManageTwoFactor' => true,
         ];
 
         return Inertia::render('settings/security', $props);
