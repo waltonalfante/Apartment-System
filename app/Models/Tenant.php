@@ -21,6 +21,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'billing_month_year',
     'billing_electricity',
     'billing_water',
+<<<<<<< HEAD
+=======
+    'billing_paid_amount',
+    'billing_payment_method',
+    'billing_receipt_path',
+    'account_credit',
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
     'check_in_date',
     'check_out_date',
     'archived_at',
@@ -34,6 +41,11 @@ class Tenant extends Model
             'billing_due_date' => 'date',
             'billing_electricity' => 'decimal:2',
             'billing_water' => 'decimal:2',
+<<<<<<< HEAD
+=======
+            'billing_paid_amount' => 'decimal:2',
+            'account_credit' => 'decimal:2',
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
             'check_in_date' => 'date',
             'check_out_date' => 'date',
             'archived_at' => 'datetime',

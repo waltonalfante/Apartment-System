@@ -74,10 +74,16 @@ export default function Register() {
                                 <Input
                                     id="contact_number"
                                     type="text"
+                                    name="contact_number"
+                                    required
                                     tabIndex={3}
+                                    inputMode="numeric"
+                                    maxLength={11}
+                                    pattern="[0-9]{11}"
                                     placeholder="Contact Number"
                                     className={authInputClassName}
                                 />
+                                <InputError message={errors.contact_number} />
                             </div>
 
                             <div className="grid gap-1.5">

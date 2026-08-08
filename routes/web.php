@@ -13,11 +13,17 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TwoFactorCode;
+<<<<<<< HEAD
 
+=======
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+<<<<<<< HEAD
 // 2FA routes (after login)
 Route::middleware(['auth'])->group(function () {
     Route::post('auth/2fa/send', [AuthController::class, 'sendTwoFactorCode'])->name('auth.2fa.send');
@@ -29,6 +35,85 @@ Route::middleware(['auth'])->group(function () {
     })->name('auth.2fa-verify');
 });
 
+=======
+// 2FA routes are disabled for now.
+// Keep this block commented for future re-enable work.
+// Route::middleware(['auth'])->group(function () {
+//     Route::post('auth/2fa/send', [AuthController::class, 'sendTwoFactorCode'])->name('auth.2fa.send');
+//     Route::post('auth/2fa/verify', [AuthController::class, 'verifyTwoFactorCode'])->name('auth.2fa.verify');
+//     Route::get('auth/2fa-verify', function () {
+//         return inertia('auth/two-factor-verify', [
+//             'userEmail' => auth()->user()?->email,
+//         ]);
+//     })->name('auth.2fa-verify');
+// });
+
+
+// Temporary protected diagnostics route for debugging Render issues.
+// Remove this route immediately after use.
+Route::get('/_admin/diagnostics', function (Request $request) {
+    if ($request->query('token') !== env('TEMP_ADMIN_TOKEN')) {
+        abort(403);
+    }
+
+    $out = [];
+    $out['app_env'] = env('APP_ENV');
+    $out['app_key_present'] = !empty(env('APP_KEY'));
+    $out['session_driver'] = config('session.driver');
+    $out['cache_driver'] = config('cache.default');
+
+    $logFile = storage_path('logs/laravel.log');
+    if (File::exists($logFile)) {
+        $lines = explode("\n", File::get($logFile));
+        $out['laravel_log_tail'] = array_slice($lines, -200);
+    } else {
+        $out['laravel_log_tail'] = 'no_log_file';
+    }
+
+    $sessDir = storage_path('framework/sessions');
+    if (is_dir($sessDir)) {
+        $out['session_files_count'] = count(File::files($sessDir));
+    } else {
+        $out['session_files_count'] = 'no_sessions_dir';
+    }
+
+    // DB connectivity test and recent users
+    try {
+        $out['db_test'] = DB::select('SELECT 1 as ok')[0]->ok ?? null;
+    } catch (\Exception $e) {
+        $out['db_error'] = $e->getMessage();
+    }
+
+    try {
+        $out['recent_users'] = DB::select("SELECT id,email,created_at FROM users ORDER BY id DESC LIMIT 10");
+    } catch (\Exception $e) {
+        $out['users_error'] = $e->getMessage();
+    }
+
+    try {
+        $out['recent_email_logs'] = DB::select("SELECT id,user_id,recipient,subject,status,error_message,created_at FROM email_logs ORDER BY id DESC LIMIT 20");
+    } catch (\Exception $e) {
+        $out['email_logs_error'] = $e->getMessage();
+    }
+
+    return response()->json($out);
+});
+
+// Temporary protected route to clear the users table on the live DB.
+// IMPORTANT: Remove this route immediately after use and redeploy.
+Route::get('/_admin/clear-users', function (Request $request) {
+    if ($request->query('token') !== env('TEMP_ADMIN_TOKEN')) {
+        abort(403);
+    }
+
+    try {
+        \DB::table('users')->truncate();
+        return response()->json(['status' => 'ok', 'message' => 'users cleared']);
+    } catch (\Throwable $e) {
+        return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+    }
+});
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [ApartmentModuleController::class, 'dashboard'])->name('dashboard');
     Route::get('reservation', [ApartmentModuleController::class, 'reservation'])->name('reservation');

@@ -309,7 +309,7 @@ export default function Communication({
                                 : 'border border-[#c9bbb0] bg-white text-[#3f5667]'
                         }`}
                     >
-                        Send Message to All
+                        Broadcast to All
                     </button>
                     <button
                         type="button"
@@ -345,7 +345,6 @@ export default function Communication({
                                         >
                                             <div className="mb-2 h-10 rounded-sm bg-[#54758b]" />
                                             <p className="font-semibold text-[#2f4e64]">{message.name}</p>
-                                            <p className="text-[#5f6e7a]">Gender: -</p>
                                             <p className="text-[#5f6e7a]">{message.room}</p>
                                             {message.unread ? (
                                                 <span className="mt-1 inline-block rounded-full bg-[#ef4242] px-2 py-0.5 text-[10px] font-semibold text-white">
@@ -456,7 +455,7 @@ export default function Communication({
                                 value={broadcastDraft}
                                 onChange={(event) => setBroadcastDraft(event.target.value)}
                                 rows={8}
-                                placeholder="Write broadcast message for all tenants..."
+                                placeholder="Write broadcast message to all tenants..."
                                 className="w-full rounded-md border border-[#d8cdc3] bg-[#f9f8f3] p-3 text-xs text-[#3e5262] outline-none"
                             />
 

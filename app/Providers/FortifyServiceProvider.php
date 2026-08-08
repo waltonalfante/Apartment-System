@@ -9,6 +9,9 @@ use App\Http\Responses\RegisterResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -35,6 +38,41 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
         $this->app->singleton(\Laravel\Fortify\Contracts\LoginResponse::class, LoginResponse::class);
         $this->app->singleton(\Laravel\Fortify\Contracts\RegisterResponse::class, RegisterResponse::class);
+<<<<<<< HEAD
+=======
+
+        // DB-backed account lock: replace Fortify authentication to enforce locks.
+        Fortify::authenticateUsing(function (Request $request) {
+            $login = $request->input(Fortify::username());
+            $user = User::where('email', $login)->first();
+
+            if (! $user) {
+                return null;
+            }
+
+            if ($user->locked_until && $user->locked_until->isFuture()) {
+                throw ValidationException::withMessages([
+                    Fortify::username() => ["Your account is locked until {$user->locked_until->toDateTimeString()}"],
+                ]);
+            }
+
+            if (Hash::check($request->password, $user->password)) {
+                $user->failed_attempts = 0;
+                $user->locked_until = null;
+                $user->save();
+
+                return $user;
+            }
+
+            $user->failed_attempts = ($user->failed_attempts ?? 0) + 1;
+            if ($user->failed_attempts >= 5) {
+                $user->locked_until = now()->addMinutes(15);
+            }
+            $user->save();
+
+            return null;
+        });
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
     }
 
     /**
@@ -101,7 +139,8 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
-            return Limit::perMinute(5)->by($throttleKey);
+            // Lock account after 5 failed attempts for 15 minutes
+            return Limit::perMinutes(15, 5)->by($throttleKey);
         });
     }
 }

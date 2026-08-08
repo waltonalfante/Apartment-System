@@ -18,10 +18,27 @@ use Inertia\Response;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+<<<<<<< HEAD
+=======
+use Illuminate\Support\Facades\DB;
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
 use Throwable;
 
 class ApartmentModuleController extends Controller
 {
+<<<<<<< HEAD
+=======
+    private function roomNumberOrderSql(): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        return match ($driver) {
+            'pgsql' => "CAST(REGEXP_REPLACE(number, '[^0-9]', '', 'g') AS INTEGER)",
+            default => "CAST(REPLACE(number, 'Room ', '') AS INTEGER)",
+        };
+    }
+
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
     private function activeTenantQuery()
     {
         $today = now()->toDateString();
@@ -186,7 +203,11 @@ class ApartmentModuleController extends Controller
         if (Schema::hasTable('rooms')) {
             $roomsQuery = Room::query()
                 ->select(['id', 'number', 'occupied', 'photo_path', 'kitchen_photo', 'room_photo', 'cr_photo', 'bed_photo'])
+<<<<<<< HEAD
                 ->orderByRaw("CAST(REPLACE(number, 'Room ', '') AS UNSIGNED)");
+=======
+                ->orderByRaw($this->roomNumberOrderSql());
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
 
             if ($page === 1) {
                 $rooms = $roomsQuery->paginate(10)->withQueryString();
@@ -794,6 +815,13 @@ class ApartmentModuleController extends Controller
                         'billing_month_year' => $tenant->billing_month_year,
                         'billing_electricity' => $tenant->billing_electricity,
                         'billing_water' => $tenant->billing_water,
+<<<<<<< HEAD
+=======
+                        'billing_paid_amount' => $tenant->billing_paid_amount ?? $tenant->downpayment,
+                        'billing_payment_method' => $tenant->billing_payment_method,
+                        'billing_receipt_path' => $tenant->billing_receipt_path,
+                        'account_credit' => $tenant->account_credit ?? 0,
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
                     ];
                 }),
             'billingHistory' => Tenant::query()
@@ -812,6 +840,12 @@ class ApartmentModuleController extends Controller
                         'billing_month_year' => $tenant->billing_month_year,
                         'billing_electricity' => $tenant->billing_electricity,
                         'billing_water' => $tenant->billing_water,
+<<<<<<< HEAD
+=======
+                        'billing_paid_amount' => $tenant->billing_paid_amount,
+                        'billing_payment_method' => $tenant->billing_payment_method,
+                        'billing_receipt_path' => $tenant->billing_receipt_path,
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
                         'downpayment' => $tenant->downpayment,
                         'payment_type' => $tenant->payment_type,
                         'gcash_number' => $tenant->gcash_number,
@@ -827,11 +861,15 @@ class ApartmentModuleController extends Controller
         }
 
         $validated = $request->validate([
+<<<<<<< HEAD
             'status' => ['required', 'in:Paid,Pending,Overdue'],
+=======
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
             'due_date' => ['nullable', 'date'],
             'month_year' => ['nullable', 'string', 'max:50'],
             'electricity' => ['nullable', 'numeric', 'min:0'],
             'water' => ['nullable', 'numeric', 'min:0'],
+<<<<<<< HEAD
         ]);
 
         $tenant->update([
@@ -842,6 +880,63 @@ class ApartmentModuleController extends Controller
             'billing_water' => $validated['water'] ?? $tenant->billing_water ?? 0,
         ]);
 
+=======
+            'amount_paid' => ['nullable', 'numeric', 'min:0'],
+            'payment_method' => ['required', 'in:cash,gcash'],
+            'receipt' => ['nullable', 'file', 'image', 'max:10240'],
+        ]);
+
+        $electricity = (float) ($validated['electricity'] ?? $tenant->billing_electricity ?? 0);
+        $water = (float) ($validated['water'] ?? $tenant->billing_water ?? 0);
+        $totalDue = 6000 + $electricity + $water;
+        $paymentAmount = max(0, (float) ($validated['amount_paid'] ?? 0));
+        $previousPaidAmount = max(0, (float) ($tenant->billing_paid_amount ?? 0));
+        $remaining = max(0, $totalDue - $previousPaidAmount);
+
+        $overpay = $paymentAmount > $remaining ? $paymentAmount - $remaining : 0;
+
+        $paidAmount = min($previousPaidAmount + $paymentAmount, $totalDue);
+        $receiptPath = $tenant->billing_receipt_path;
+
+        if ($validated['payment_method'] === 'gcash' && ! $request->hasFile('receipt') && ! $receiptPath) {
+            return back()->withInput()->with('error', 'GCash payments require a receipt image.');
+        }
+
+        if ($validated['payment_method'] === 'cash') {
+            $receiptPath = null;
+        }
+
+        if ($validated['payment_method'] === 'gcash' && $request->hasFile('receipt')) {
+            $receiptFile = $request->file('receipt');
+            $receiptName = sprintf(
+                'billing_%d_%s.%s',
+                $tenant->id,
+                now()->format('YmdHis'),
+                $receiptFile->getClientOriginalExtension() ?: 'jpg'
+            );
+            $receiptPath = $receiptFile->storeAs('billing-receipts', $receiptName, 'public');
+        }
+
+        $status = $paidAmount >= $totalDue
+            ? 'Paid'
+            : ($paidAmount > 0 ? 'Partial' : 'Pending');
+
+        $tenant->update([
+            'billing_status' => $status,
+            'billing_due_date' => $validated['due_date'] ?? $tenant->billing_due_date,
+            'billing_month_year' => $validated['month_year'] ?? $tenant->billing_month_year,
+            'billing_electricity' => $electricity,
+            'billing_water' => $water,
+            'billing_paid_amount' => $paidAmount,
+            'billing_payment_method' => $validated['payment_method'],
+            'billing_receipt_path' => $receiptPath,
+        ]);
+
+        if ($overpay > 0) {
+            $tenant->increment('account_credit', $overpay);
+        }
+
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
         return back()->with('success', "Billing updated for {$tenant->name}.");
     }
 
@@ -1158,7 +1253,11 @@ class ApartmentModuleController extends Controller
 
             if ($photoCount > 0) {
                 $rooms = Room::query()
+<<<<<<< HEAD
                     ->orderByRaw("CAST(REPLACE(number, 'Room ', '') AS UNSIGNED)")
+=======
+                    ->orderByRaw($this->roomNumberOrderSql())
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
                     ->get();
 
                 foreach ($rooms as $idx => $room) {
