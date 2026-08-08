@@ -20,7 +20,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --silent
 COPY . .
-COPY --from=composer_builder /app/resources/js /app/resources/js
+RUN npm run build
 RUN npm run build
 
 # Stage 3: runtime with php-fpm + nginx
