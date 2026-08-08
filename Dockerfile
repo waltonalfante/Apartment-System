@@ -20,6 +20,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --silent
 COPY . .
+RUN ls -la resources/js || true
+RUN ls -la resources/js/routes || true
 RUN npm run build
 RUN npm run build
 
