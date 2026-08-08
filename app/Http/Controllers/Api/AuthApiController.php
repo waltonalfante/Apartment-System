@@ -19,6 +19,12 @@ class AuthApiController extends Controller
     public function register(Request $request): JsonResponse
     {
         $user = $this->createNewUser->create($request->all());
+<<<<<<< HEAD
+        $this->otpService->issue($user, 'registration', ['source' => 'api'], 'Your Apartment Verification Code', 'Verify Your Email');
+
+        return response()->json([
+            'message' => 'Account created. OTP sent to email.',
+=======
 
         // Registration 2FA is disabled for now.
         // Keep this block commented for future re-enable work.
@@ -26,6 +32,7 @@ class AuthApiController extends Controller
 
         return response()->json([
             'message' => 'Account created successfully.',
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
             'user' => $user,
         ], 201);
     }

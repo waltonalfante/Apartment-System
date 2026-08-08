@@ -1,6 +1,8 @@
 <?php
 
+use App\Mail\TwoFactorCode;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 
 test('login screen can be rendered', function () {
@@ -12,13 +14,16 @@ test('login screen can be rendered', function () {
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
 
+    Mail::fake();
+
     $response = $this->post(route('login.store'), [
         'email' => $user->email,
         'password' => 'password',
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('auth.2fa-verify', absolute: false));
+    Mail::assertSent(TwoFactorCode::class);
 });
 
 test('users with two factor data still authenticate normally', function () {
