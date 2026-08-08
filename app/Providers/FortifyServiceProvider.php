@@ -38,8 +38,6 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
         $this->app->singleton(\Laravel\Fortify\Contracts\LoginResponse::class, LoginResponse::class);
         $this->app->singleton(\Laravel\Fortify\Contracts\RegisterResponse::class, RegisterResponse::class);
-<<<<<<< HEAD
-=======
 
         // DB-backed account lock: replace Fortify authentication to enforce locks.
         Fortify::authenticateUsing(function (Request $request) {
@@ -72,7 +70,6 @@ class FortifyServiceProvider extends ServiceProvider
 
             return null;
         });
->>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
     }
 
     /**

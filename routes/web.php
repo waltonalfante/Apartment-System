@@ -13,29 +13,12 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TwoFactorCode;
-<<<<<<< HEAD
-
-=======
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
->>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
-<<<<<<< HEAD
-// 2FA routes (after login)
-Route::middleware(['auth'])->group(function () {
-    Route::post('auth/2fa/send', [AuthController::class, 'sendTwoFactorCode'])->name('auth.2fa.send');
-    Route::post('auth/2fa/verify', [AuthController::class, 'verifyTwoFactorCode'])->name('auth.2fa.verify');
-    Route::get('auth/2fa-verify', function () {
-        return inertia('auth/two-factor-verify', [
-            'userEmail' => auth()->user()?->email,
-        ]);
-    })->name('auth.2fa-verify');
-});
-
-=======
 // 2FA routes are disabled for now.
 // Keep this block commented for future re-enable work.
 // Route::middleware(['auth'])->group(function () {
@@ -113,7 +96,7 @@ Route::get('/_admin/clear-users', function (Request $request) {
         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
 });
->>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [ApartmentModuleController::class, 'dashboard'])->name('dashboard');
     Route::get('reservation', [ApartmentModuleController::class, 'reservation'])->name('reservation');
