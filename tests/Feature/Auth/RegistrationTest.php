@@ -1,5 +1,7 @@
 <?php
 
+use App\Mail\TwoFactorCode;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -13,6 +15,8 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register', function () {
+    Mail::fake();
+
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'contact_number' => '09123456789',
@@ -22,6 +26,10 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
+<<<<<<< HEAD
+    $response->assertRedirect(route('auth.2fa-verify', absolute: false));
+    Mail::assertSent(TwoFactorCode::class);
+=======
     $response->assertRedirect(route('dashboard', absolute: false));
 });
 
@@ -37,4 +45,5 @@ test('registration contact number must be exactly 11 digits', function () {
 
     $response->assertRedirect(route('register'));
     $response->assertSessionHasErrors(['contact_number']);
+>>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
 });

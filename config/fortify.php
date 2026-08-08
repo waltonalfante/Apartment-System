@@ -147,14 +147,7 @@ return [
         Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
-        // Two-factor routes are kept registered so frontend route
-        // generation includes the two-factor modules. The runtime
-        // behavior for issuing codes has been disabled elsewhere.
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-            // 'window' => 0
-        ]),
+        // Two-factor authentication disabled (removed from features).
     ],
 
 ];

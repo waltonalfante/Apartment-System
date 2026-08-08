@@ -12,10 +12,7 @@ class RegisterResponse implements RegisterResponseContract
      */
     public function toResponse($request): RedirectResponse
     {
-        // Registration 2FA flow is disabled for now.
-        // Keep this redirect commented for future re-enable work.
-        // return redirect()->route('auth.2fa-verify')->with('status', 'We sent a verification code to your email.');
-
-        return redirect()->route('dashboard');
+        // 2FA disabled: direct redirect to home/dashboard after registration
+        return redirect()->intended(config('fortify.home'));
     }
 }

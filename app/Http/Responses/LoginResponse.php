@@ -4,7 +4,7 @@ namespace App\Http\Responses;
 
 use Illuminate\Http\RedirectResponse;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
-use App\Services\OtpService;
+use Illuminate\Support\Facades\Log;
 
 class LoginResponse implements LoginResponseContract
 {
@@ -13,7 +13,10 @@ class LoginResponse implements LoginResponseContract
      */
     public function toResponse($request): RedirectResponse
     {
-        // Two-factor issuance temporarily disabled to avoid production failures.
-        return redirect()->route('dashboard');
+        $user = $request->user();
+        // 2FA disabled: simply redirect authenticated users to the home/dashboard.
+        Log::info('LoginResponse triggered (2FA disabled)', ['user_id' => $user?->id ?? null, 'email' => $user?->email ?? null]);
+
+        return redirect()->intended(config('fortify.home'));
     }
 }

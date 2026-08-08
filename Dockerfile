@@ -9,7 +9,9 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts
 COPY . .
 RUN composer dump-autoload --optimize --no-interaction
-RUN APP_ENV=production APP_KEY=base64:0000000000000000000000000000000000000000000= php artisan wayfinder:generate --with-form
+
+# Optional: generate wayfinder during build if required (no-op if not configured)
+RUN APP_ENV=production APP_KEY=base64:0000000000000000000000000000000000000000000= php artisan wayfinder:generate --with-form || true
 
 # Stage 2: build frontend
 FROM node:20-bookworm-slim AS node_builder
@@ -18,7 +20,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --silent
 COPY . .
-COPY --from=composer_builder /app/resources/js /app/resources/js
+RUN npm run build
 RUN npm run build
 
 # Stage 3: runtime with php-fpm + nginx

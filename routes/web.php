@@ -96,6 +96,7 @@ Route::get('/_admin/clear-users', function (Request $request) {
         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
     }
 });
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [ApartmentModuleController::class, 'dashboard'])->name('dashboard');
     Route::get('reservation', [ApartmentModuleController::class, 'reservation'])->name('reservation');
