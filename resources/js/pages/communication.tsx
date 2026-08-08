@@ -1,5 +1,5 @@
-import { Head, router } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import ApartmentLayout from '@/layouts/apartment-layout';
 
 type Conversation = {
@@ -53,11 +53,12 @@ export default function Communication({
         room: '',
         message: '',
     });
+    const { props } = usePage<{ flash?: { success?: string | null; error?: string | null } }>();
+    const flash = props.flash;
 
-    const unreadCount = useMemo(
-        () => conversations.filter((conversation) => conversation.unread).length,
-        [conversations],
-    );
+    useEffect(() => {
+        setConversations(initialConversations);
+    }, [initialConversations]);
 
     const openConversation = (id: number) => {
         const target = conversations.find((conversation) => conversation.id === id);
@@ -124,9 +125,6 @@ export default function Communication({
                   }
                 : null,
         );
-            setNoticeType('success');
-            setNotice(`Message sent to ${selectedConversation.name}.`);
-
         router.post(
             `/communication/conversations/${selectedConversation.id}/message`,
             {
@@ -135,14 +133,48 @@ export default function Communication({
             {
                 preserveScroll: true,
                 preserveState: true,
+                onSuccess: () => {
+                    setNoticeType('success');
+                    setNotice(`Message sent to ${selectedConversation.name}.`);
+                },
+                onError: () => {
+                    setNoticeType('error');
+                    setNotice('Unable to send message right now. Please try again.');
+                },
             },
         );
     };
 
+    const deleteConversation = (conversation: Conversation) => {
+        if (!window.confirm(`Delete conversation for ${conversation.name}?`)) {
+            return;
+        }
+
+        router.delete(`/communication/conversations/${conversation.id}`, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                setConversations((current) =>
+                    current.filter((item) => item.id !== conversation.id),
+                );
+                if (selectedConversation?.id === conversation.id) {
+                    setSelectedConversation(null);
+                }
+                setNoticeType('success');
+                setNotice('Conversation deleted.');
+            },
+        });
+    };
+
     const broadcastMessage = () => {
-        const broadcastText =
-            broadcastDraft.trim() ||
-            'Admin broadcast sent. Please check your latest announcements.';
+        const broadcastText = broadcastDraft.trim();
+
+        if (!broadcastText) {
+            setNoticeType('error');
+            setNotice('Broadcast message cannot be empty.');
+
+            return;
+        }
 
         setConversations((currentConversations) =>
             currentConversations.map((conversation) => ({
@@ -154,9 +186,6 @@ export default function Communication({
         );
         setSelectedConversation(null);
         setBroadcastDraft('');
-        setNoticeType('success');
-        setNotice('Broadcast message sent to all tenants.');
-
         router.post(
             '/communication/broadcast',
             {
@@ -165,6 +194,14 @@ export default function Communication({
             {
                 preserveScroll: true,
                 preserveState: true,
+                onSuccess: () => {
+                    setNoticeType('success');
+                    setNotice('Broadcast message sent to all tenants.');
+                },
+                onError: () => {
+                    setNoticeType('error');
+                    setNotice('Unable to send broadcast right now. Please try again.');
+                },
             },
         );
     };
@@ -242,6 +279,11 @@ export default function Communication({
                     <div
                         className="rounded-md bg-[#2ca94e] px-3 py-2 text-xs font-semibold text-white"
                     >
+                        {notice}
+                    </div>
+                ) : null}
+                {notice && noticeType === 'error' ? (
+                    <div className="rounded-md bg-[#d84a4a] px-3 py-2 text-xs font-semibold text-white">
                         {notice}
                     </div>
                 ) : null}
@@ -354,6 +396,13 @@ export default function Communication({
                                     <div className="flex justify-end gap-2">
                                         <button
                                             type="button"
+                                            onClick={() => deleteConversation(selectedConversation)}
+                                            className="rounded-md border border-[#c9bbb0] bg-white px-4 py-1.5 text-xs font-semibold text-[#3f5667]"
+                                        >
+                                            Delete
+                                        </button>
+                                        <button
+                                            type="button"
                                             onClick={() => setDraftMessage('')}
                                             className="rounded-md border border-[#c9bbb0] bg-white px-4 py-1.5 text-xs font-semibold text-[#3f5667]"
                                         >
@@ -431,22 +480,6 @@ export default function Communication({
                     </article>
                 )}
 
-                <div className="grid gap-3 md:grid-cols-3">
-                    <article className="rounded-md border border-[#d8cdc3] bg-white px-4 py-3 text-center">
-                        <p className="text-2xl font-semibold text-[#2f4e64]">{unreadCount}</p>
-                        <p className="text-xs text-[#6e7c88]">Unread Messages</p>
-                    </article>
-                    <article className="rounded-md border border-[#d8cdc3] bg-white px-4 py-3 text-center">
-                        <p className="text-2xl font-semibold text-[#2f4e64]">{conversations.length}</p>
-                        <p className="text-xs text-[#6e7c88]">Active Conversations</p>
-                    </article>
-                    <article className="rounded-md border border-[#d8cdc3] bg-white px-4 py-3 text-center">
-                        <p className="text-2xl font-semibold text-[#2f4e64]">
-                            {conversations.filter((conversation) => conversation.unread).length}
-                        </p>
-                        <p className="text-xs text-[#6e7c88]">Pending Requests</p>
-                    </article>
-                </div>
             </section>
 
             {isAddMessageOpen ? (

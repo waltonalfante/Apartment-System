@@ -38,7 +38,14 @@ export default function ApartmentLayout({
                 name?: string;
             };
         };
+        flash?: {
+            success?: string | null;
+            error?: string | null;
+        };
     }>();
+    const currentPath = url.split('?')[0];
+    const flashRoutes = ['/reservation', '/tenant-management', '/communication'];
+    const showFlash = flashRoutes.includes(currentPath);
 
     const currentUser = props.auth?.user?.name ?? 'Admin';
 
@@ -141,6 +148,18 @@ export default function ApartmentLayout({
                         </div>
 
                         <div className="px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+                            {showFlash && props.flash?.success ? (
+                                <div className="mb-3 rounded-md bg-[#2ca94e] px-3 py-2 text-xs font-semibold text-white">
+                                    {props.flash.success}
+                                </div>
+                            ) : null}
+
+                            {showFlash && props.flash?.error ? (
+                                <div className="mb-3 rounded-md bg-[#d84a4a] px-3 py-2 text-xs font-semibold text-white">
+                                    {props.flash.error}
+                                </div>
+                            ) : null}
+
                             <h1 className="apartment-page-title mb-5 text-[#0f1c3a] lg:mb-6">
                                 {title}
                             </h1>

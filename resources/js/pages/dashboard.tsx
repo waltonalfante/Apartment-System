@@ -10,22 +10,79 @@ type DashboardStats = {
 
 type Props = {
     stats: DashboardStats;
+    tenants: TenantEntry[];
+    reservations: ReservationEntry[];
 };
 
-const tenants = [
-    { room: '01', name: 'Nicole Edrian', gender: 'Female', contact: '0909090909' },
-    { room: '02', name: 'Faith Gawan', gender: 'Female', contact: '0909090909' },
-    { room: '03', name: 'Jeron Montjejo', gender: 'Male', contact: '0909090909' },
-    { room: '04', name: 'Justin Nabunturuan', gender: 'Male', contact: '0909090909' },
-];
+type TenantEntry = {
+    id: number;
+    room_id: number;
+    room_code: string;
+    name: string;
+    gender: 'Male' | 'Female';
+    contact: string;
+    check_in_date?: string | null;
+    check_out_date?: string | null;
+};
 
-export default function Dashboard({ stats }: Props) {
+type ReservationEntry = {
+    id: number;
+    room_id: number;
+    room_code: string;
+    name: string;
+    check_in_date?: string | null;
+    check_out_date?: string | null;
+};
+
+const buildMonthDays = (year: number, month: number) => {
+    const firstDay = new Date(year, month, 1);
+    const startOffset = firstDay.getDay();
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const totalCells = 42;
+
+    return Array.from({ length: totalCells }, (_, index) => {
+        const dayNumber = index - startOffset + 1;
+
+        if (dayNumber < 1 || dayNumber > lastDay) {
+            return null;
+        }
+
+        return dayNumber;
+    });
+};
+
+const formatDateKey = (year: number, month: number, day: number) => {
+    const paddedMonth = String(month + 1).padStart(2, '0');
+    const paddedDay = String(day).padStart(2, '0');
+
+    return `${year}-${paddedMonth}-${paddedDay}`;
+};
+
+export default function Dashboard({ stats, tenants, reservations }: Props) {
     const quickStats = [
         { label: 'Total Rooms', value: String(stats.total_rooms) },
-        { label: 'Occupied', value: String(stats.occupied) },
-        { label: 'Available', value: String(stats.available) },
+        { label: 'Occupied', value: String(stats.occupied), tone: 'alert' as const },
+        { label: 'Available', value: String(stats.available), tone: 'success' as const },
         { label: 'Collection Rate', value: `${stats.collection_rate}%` },
     ];
+
+    const funnelStats = [
+        { label: 'Occupied', value: stats.occupied, tone: 'alert' as const },
+        { label: 'Reserved', value: reservations.length, tone: 'neutral' as const },
+        { label: 'Available', value: stats.available, tone: 'success' as const },
+        { label: 'Total Rooms', value: stats.total_rooms, tone: 'total' as const },
+    ];
+    const funnelMax = Math.max(1, ...funnelStats.map((metric) => metric.value));
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const todayKey = formatDateKey(year, month, today.getDate());
+    const reservationDates = new Set(
+        reservations
+            .map((reservation) => reservation.check_in_date)
+            .filter(Boolean) as string[],
+    );
 
     return (
         <ApartmentLayout title="Dashboard">
@@ -41,7 +98,15 @@ export default function Dashboard({ stats }: Props) {
                             <p className="text-xs font-medium uppercase text-[#6c7f8b]">
                                 {metric.label}
                             </p>
-                            <p className="mt-1 text-2xl font-semibold text-[#2a4254]">
+                            <p
+                                className={`mt-1 text-2xl font-semibold ${
+                                    metric.tone === 'alert'
+                                        ? 'text-[#c0392b]'
+                                        : metric.tone === 'success'
+                                          ? 'text-[#1f7a4f]'
+                                          : 'text-[#2a4254]'
+                                }`}
+                            >
                                 {metric.value}
                             </p>
                         </article>
@@ -59,23 +124,47 @@ export default function Dashboard({ stats }: Props) {
                             </span>
                         </div>
 
-                        <div className="h-40 rounded-md border border-[#d8cdc3] bg-[#f9f8f3] px-4 py-3">
-                            <div className="flex h-full items-end gap-2">
-                                {[30, 55, 42, 70, 48, 65, 52].map((value, index) => (
-                                    <div key={index} className="flex-1">
-                                        <div
-                                            className="rounded-sm bg-[#8ea8ba]"
-                                            style={{ height: `${value}%` }}
-                                        />
-                                    </div>
-                                ))}
+                        <div className="h-64 rounded-md border border-[#d8cdc3] bg-gradient-to-b from-[#fbfaf6] to-[#f3efe6] px-5 py-5">
+                            <div className="flex h-full items-end gap-5">
+                                                                {funnelStats.map((metric) => {
+                                    const heightPx = Math.round((metric.value / funnelMax) * 140);
+                                    const barHeight = metric.value > 0 ? Math.max(heightPx, 24) : 16;
+                                                                        const barTone =
+                                                                                metric.tone === 'alert'
+                                                                                        ? 'bg-[#c0392b]'
+                                                                                        : metric.tone === 'success'
+                                                                                            ? 'bg-[#1f7a4f]'
+                                                                                            : metric.tone === 'total'
+                                                                                                ? 'bg-[#2f4e64]'
+                                                                                                : 'bg-[#7a93a6]';
+
+                                    return (
+                                        <div key={metric.label} className="flex-1 text-center">
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#2f4e64]">
+                                                {metric.value}
+                                            </p>
+                                            <div className="mx-auto flex h-full w-20 flex-col justify-end">
+                                                <div
+                                                    className={`rounded-2xl ${barTone} shadow-[0_10px_24px_rgba(15,23,42,0.18)]`}
+                                                    style={{ height: `${barHeight}px` }}
+                                                />
+                                            </div>
+                                            <p className="mt-3 text-[10px] font-semibold text-[#5b6d7a]">
+                                                {metric.label}
+                                            </p>
+                                            <p className="text-[10px] text-[#8a96a0]">
+                                                {Math.round((metric.value / funnelMax) * 100)}% of max
+                                            </p>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </article>
 
                     <article className="rounded-md border border-[#c9bbb0] bg-white/70 p-4">
                         <h2 className="mb-2 text-sm font-semibold uppercase text-[#2f4e64]">
-                            June 2026
+                            {today.toLocaleString('default', { month: 'long' })} {year}
                         </h2>
                         <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-[#6f7b86]">
                             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
@@ -83,18 +172,30 @@ export default function Dashboard({ stats }: Props) {
                                     {day}
                                 </div>
                             ))}
-                            {Array.from({ length: 35 }, (_, i) => i + 1).map((day) => (
-                                <div
-                                    key={day}
-                                    className={`rounded-sm py-1 ${
-                                        day === 14 || day === 21
-                                            ? 'bg-[#5f7f95] text-white'
-                                            : 'bg-[#f4f1e8]'
-                                    }`}
-                                >
-                                    {day <= 30 ? day : ''}
-                                </div>
-                            ))}
+                            {buildMonthDays(year, month).map((day, index) => {
+                                if (!day) {
+                                    return <div key={`empty-${index}`} className="py-1" />;
+                                }
+
+                                const dateKey = formatDateKey(year, month, day);
+                                const isToday = dateKey === todayKey;
+                                const hasReservation = reservationDates.has(dateKey);
+
+                                return (
+                                    <div
+                                        key={dateKey}
+                                        className={`rounded-sm py-1 ${
+                                            isToday
+                                                ? 'bg-[#2ca94e] text-white'
+                                                : hasReservation
+                                                  ? 'bg-[#5f7f95] text-white'
+                                                  : 'bg-[#f4f1e8]'
+                                        }`}
+                                    >
+                                        {day}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </article>
                 </section>
@@ -113,8 +214,8 @@ export default function Dashboard({ stats }: Props) {
                             </thead>
                             <tbody>
                                 {tenants.map((tenant) => (
-                                    <tr key={tenant.room} className="border-b border-[#ece4de]">
-                                        <td className="px-3 py-2">{tenant.room}</td>
+                                    <tr key={tenant.id} className="border-b border-[#ece4de]">
+                                        <td className="px-3 py-2">{tenant.room_code}</td>
                                         <td className="px-3 py-2">{tenant.name}</td>
                                         <td className="px-3 py-2">{tenant.gender}</td>
                                         <td className="px-3 py-2">{tenant.contact}</td>
@@ -128,6 +229,11 @@ export default function Dashboard({ stats }: Props) {
                             </tbody>
                         </table>
                     </div>
+                    {tenants.length === 0 ? (
+                        <p className="px-3 py-3 text-xs text-[#6f7b86]">
+                            No active tenants yet.
+                        </p>
+                    ) : null}
                 </section>
             </div>
         </ApartmentLayout>

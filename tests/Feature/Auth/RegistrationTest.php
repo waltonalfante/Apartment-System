@@ -1,5 +1,7 @@
 <?php
 
+use App\Mail\TwoFactorCode;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -13,6 +15,8 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register', function () {
+    Mail::fake();
+
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -21,5 +25,6 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('auth.2fa-verify', absolute: false));
+    Mail::assertSent(TwoFactorCode::class);
 });
