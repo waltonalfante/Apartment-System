@@ -34,7 +34,20 @@ touch /var/www/html/storage/logs/laravel.log || true
 tail -n 200 /var/www/html/storage/logs/laravel.log || true
 
 echo "=== INIT APP ==="
+# Ensure database sqlite exists (may not be used if using external DB)
 php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');" || true
+
+# If DB host does not resolve, fall back to SQLite at runtime to allow app to start
+# This prevents startup failures when a configured Postgres host is DNS-unreachable.
+if [ -n "$DB_HOST" ]; then
+  RESOLVED=$(php -r "echo gethostbyname('$DB_HOST');" 2>/dev/null || echo "")
+  if [ "$RESOLVED" = "$DB_HOST" ] || [ -z "$RESOLVED" ]; then
+    echo "DB host '$DB_HOST' not resolvable; switching to SQLite fallback for startup"
+    export DB_CONNECTION=sqlite
+    export DB_DATABASE=/var/www/html/database/database.sqlite
+    php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');" || true
+  fi
+fi
 # Ensure laravel storage and cache dirs exist and are writable
 mkdir -p /var/www/html/bootstrap/cache /var/www/html/storage/framework /var/www/html/storage/logs || true
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
