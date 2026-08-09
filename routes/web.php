@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\TwoFactorCode;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+Route::match(['get', 'head'], '/index.php/{path?}', function () {
+    return redirect('/');
+})->where('path', '.*');
+
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
