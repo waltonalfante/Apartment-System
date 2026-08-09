@@ -62,6 +62,7 @@ export default function Communication({
 
     const openConversation = (id: number) => {
         const target = conversations.find((conversation) => conversation.id === id);
+
         if (!target) {
             return;
         }
@@ -157,9 +158,11 @@ export default function Communication({
                 setConversations((current) =>
                     current.filter((item) => item.id !== conversation.id),
                 );
+
                 if (selectedConversation?.id === conversation.id) {
                     setSelectedConversation(null);
                 }
+
                 setNoticeType('success');
                 setNotice('Conversation deleted.');
             },
@@ -376,6 +379,7 @@ export default function Communication({
                                         value={draftMessage}
                                         onChange={(event) => {
                                             setDraftMessage(event.target.value);
+
                                             if (draftMessageError) {
                                                 setDraftMessageError('');
                                             }
@@ -501,12 +505,12 @@ export default function Communication({
                                 Tenant Name
                                 <input
                                     value={newConversationDraft.name}
-                                    onChange={(event) =>
-                                        {
+                                    onChange={(event) => {
                                             setNewConversationDraft((currentDraft) => ({
                                                 ...currentDraft,
                                                 name: event.target.value,
                                             }));
+
                                             if (newConversationErrors.name) {
                                                 setNewConversationErrors((currentErrors) => ({
                                                     ...currentErrors,
@@ -533,12 +537,12 @@ export default function Communication({
                                 Room Number
                                 <input
                                     value={newConversationDraft.room}
-                                    onChange={(event) =>
-                                        {
+                                    onChange={(event) => {
                                             setNewConversationDraft((currentDraft) => ({
                                                 ...currentDraft,
                                                 room: sanitizeRoomInput(event.target.value),
                                             }));
+
                                             if (newConversationErrors.room) {
                                                 setNewConversationErrors((currentErrors) => ({
                                                     ...currentErrors,

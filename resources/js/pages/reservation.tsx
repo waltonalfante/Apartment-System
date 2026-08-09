@@ -53,11 +53,27 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
 
     const getRoomPhotos = (room: any) => {
         const photos: string[] = [];
-        if (room?.kitchen_photo) photos.push(room.kitchen_photo);
-        if (room?.room_photo) photos.push(room.room_photo);
-        if (room?.cr_photo) photos.push(room.cr_photo);
-        if (room?.bed_photo) photos.push(room.bed_photo);
-        if (room?.photo_path) photos.push(room.photo_path);
+
+        if (room?.kitchen_photo) {
+photos.push(room.kitchen_photo);
+}
+
+        if (room?.room_photo) {
+photos.push(room.room_photo);
+}
+
+        if (room?.cr_photo) {
+photos.push(room.cr_photo);
+}
+
+        if (room?.bed_photo) {
+photos.push(room.bed_photo);
+}
+
+        if (room?.photo_path) {
+photos.push(room.photo_path);
+}
+
         return photos.length ? photos : photoList;
     };
 
@@ -103,7 +119,11 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
 
             // preserve selection but update occupied flag from tenants
             const updated = rooms.data.find((room) => room.id === currentSelectedRoom.id) ?? null;
-            if (!updated) return null;
+
+            if (!updated) {
+return null;
+}
+
             return {
                 ...updated,
                 occupied: tenantMap.has(updated.id),
@@ -199,15 +219,42 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
 
     const validateReservation = () => {
         const next: Record<string, string> = {};
-        if (!fullName || fullName.trim().length < 3) next.name = 'Full name must be at least 3 characters.';
-        if (!/^\d{11}$/.test(contactNumber || '')) next.contact = 'Contact must be an 11-digit number.';
-        if (!emailAddress || !emailAddress.includes('@')) next.email = 'Enter a valid email address.';
-        if (Number(downPayment) < 500) next.downpayment = 'Downpayment must be at least 500.';
-        if (!checkInDate) next.check_in_date = 'Check-in date is required.';
-        if (checkInDate && checkInDate < todayText) next.check_in_date = 'Check-in date must be today or later.';
-        if (checkOutDate && checkOutDate < checkInDate) next.check_out_date = 'Check-out date must be after check-in date.';
-        if (!['Cash', 'GCash'].includes(paymentMode)) next.payment_type = 'Payment type must be Cash or GCash.';
-        if (paymentMode === 'GCash' && !/^\d{11}$/.test(gcashNumber || '')) next.gcash_number = 'GCash number must be 11 digits.';
+
+        if (!fullName || fullName.trim().length < 3) {
+next.name = 'Full name must be at least 3 characters.';
+}
+
+        if (!/^\d{11}$/.test(contactNumber || '')) {
+next.contact = 'Contact must be an 11-digit number.';
+}
+
+        if (!emailAddress || !emailAddress.includes('@')) {
+next.email = 'Enter a valid email address.';
+}
+
+        if (Number(downPayment) < 500) {
+next.downpayment = 'Downpayment must be at least 500.';
+}
+
+        if (!checkInDate) {
+next.check_in_date = 'Check-in date is required.';
+}
+
+        if (checkInDate && checkInDate < todayText) {
+next.check_in_date = 'Check-in date must be today or later.';
+}
+
+        if (checkOutDate && checkOutDate < checkInDate) {
+next.check_out_date = 'Check-out date must be after check-in date.';
+}
+
+        if (!['Cash', 'GCash'].includes(paymentMode)) {
+next.payment_type = 'Payment type must be Cash or GCash.';
+}
+
+        if (paymentMode === 'GCash' && !/^\d{11}$/.test(gcashNumber || '')) {
+next.gcash_number = 'GCash number must be 11 digits.';
+}
 
         return next;
     };
@@ -240,11 +287,15 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
     const [newReserveRoomId, setNewReserveRoomId] = useState<number | null>(rooms.data?.[0]?.id ?? null);
 
     const confirmReservation = () => {
-        if (!activeRoom) return;
+        if (!activeRoom) {
+return;
+}
 
         const nextErrors = validateReservation();
+
         if (Object.keys(nextErrors).length > 0) {
             setErrors(nextErrors);
+
             return;
         }
 
@@ -258,7 +309,9 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
             check_out_date: checkOutDate || null,
         };
 
-        if (paymentMode === 'GCash') payload.gcash_number = gcashNumber;
+        if (paymentMode === 'GCash') {
+payload.gcash_number = gcashNumber;
+}
 
         router.post(
             `/reservation/rooms/${activeRoom.id}/reserve`,
@@ -282,19 +335,25 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
     };
 
     const confirmNewReservation = () => {
-        if (!newReserveRoomId) return;
+        if (!newReserveRoomId) {
+return;
+}
 
         const activeTenant = tenantsByRoomId.get(newReserveRoomId) ?? null;
+
         if (activeTenant?.check_out_date && checkInDate && checkInDate < activeTenant.check_out_date) {
             setErrors({
                 check_in_date: `Check-in date must be after current tenant check-out (${activeTenant.check_out_date}).`,
             });
+
             return;
         }
 
         const nextErrors = validateReservation();
+
         if (Object.keys(nextErrors).length > 0) {
             setErrors(nextErrors);
+
             return;
         }
 
@@ -308,7 +367,9 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
             check_out_date: checkOutDate || null,
         };
 
-        if (paymentMode === 'GCash') payload.gcash_number = gcashNumber;
+        if (paymentMode === 'GCash') {
+payload.gcash_number = gcashNumber;
+}
 
         router.post(`/reservation/rooms/${newReserveRoomId}/reserve`, payload, {
             preserveScroll: true,
@@ -330,11 +391,15 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
     };
 
     const cancelReservation = () => {
-        if (!activeRoom) return;
+        if (!activeRoom) {
+return;
+}
 
         const reservation = (reservations || []).find((r: any) => r.room_id === activeRoom.id) || null;
+
         if (!reservation) {
             setTableError('No active reservation found for this room.');
+
             return;
         }
 
@@ -380,7 +445,11 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
 
     const computedTotalPages = useMemo(() => {
         const total = (rooms && rooms.total) ? Number(rooms.total) : 0;
-        if (total <= 10) return 1;
+
+        if (total <= 10) {
+return 1;
+}
+
         return 1 + Math.ceil(Math.max(0, total - 10) / 5);
     }, [rooms]);
 
@@ -413,7 +482,9 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
     };
 
     const confirmCancelReservation = () => {
-        if (!cancelTarget) return;
+        if (!cancelTarget) {
+return;
+}
 
         const payload: any = {
             cancellation_action: cancelAction,
@@ -587,8 +658,12 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
                                 <thead className="sticky top-0 z-10 bg-[#f5f3eb]"><tr className="border-b border-[#ddd3c8] text-[#677482]"><th className="px-3 py-2 font-semibold">Room</th><th className="px-3 py-2 font-semibold">Name</th><th className="px-3 py-2 font-semibold">Check-in</th><th className="px-3 py-2 font-semibold">Payment</th><th className="px-3 py-2 text-right font-semibold">Action</th></tr></thead>
                                 <tbody>
                                     {(reservations || []).filter((reservation: any) => {
-                                        if (!listSearch) return true;
+                                        if (!listSearch) {
+return true;
+}
+
                                         const q = listSearch.toLowerCase();
+
                                         return `${reservation.name} ${reservation.room_code || ''}`.toLowerCase().includes(q);
                                     }).map((reservation: any) => (
                                         <tr key={`reservation-${reservation.id}`} className="border-b border-[#eee6e0] text-[#3e5262]"><td className="px-3 py-2">Room {reservation.room_code || reservation.room_id}</td><td className="px-3 py-2">{reservation.name}</td><td className="px-3 py-2">{reservation.check_in_date || '-'}</td><td className="px-3 py-2">{reservation.payment_type === 'gcash' ? 'GCash' : 'Cash'}</td><td className="px-3 py-2 text-right"><div className="flex justify-end gap-1"><button type="button" onClick={() => handleConfirmCheckIn(reservation.id, reservation.name)} className="rounded-md bg-[#f0b01f] px-2 py-1 text-[10px] font-semibold text-[#312400]">Confirm Check-in</button><button type="button" onClick={() => handleCancelReservation(reservation.room_id, reservation.room_code || reservation.room_id)} className="rounded-md bg-[#ff3434] px-2 py-1 text-[10px] font-semibold text-white">Cancel</button></div></td></tr>
@@ -604,8 +679,12 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
                                 <thead className="sticky top-0 z-10 bg-[#f5f3eb]"><tr className="border-b border-[#ddd3c8] text-[#677482]"><th className="px-3 py-2 font-semibold">Room</th><th className="px-3 py-2 font-semibold">Name</th><th className="px-3 py-2 font-semibold">Cancelled</th><th className="px-3 py-2 font-semibold">Decision</th><th className="px-3 py-2 font-semibold">Notes</th></tr></thead>
                                 <tbody>
                                     {(reservationHistory || []).filter((h: any) => {
-                                        if (!listSearch) return true;
+                                        if (!listSearch) {
+return true;
+}
+
                                         const q = listSearch.toLowerCase();
+
                                         return `${h.name} ${h.room_code || ''}`.toLowerCase().includes(q);
                                     }).map((h: any) => (
                                         <tr key={`cancelled-${h.id}`} className="border-b border-[#eee6e0] text-[#3e5262]"><td className="px-3 py-2">Room {h.room_code}</td><td className="px-3 py-2">{h.name}</td><td className="px-3 py-2">{h.cancelled_at || '-'}</td><td className="px-3 py-2">{h.cancellation_action || '-'}</td><td className="px-3 py-2">{h.cancellation_notes || '-'}</td></tr>
@@ -621,8 +700,12 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
                                 <thead className="sticky top-0 z-10 bg-[#f5f3eb]"><tr className="border-b border-[#ddd3c8] text-[#677482]"><th className="px-3 py-2 font-semibold">Room</th><th className="px-3 py-2 font-semibold">Tenant</th><th className="px-3 py-2 font-semibold">Check-out Date</th><th className="px-3 py-2 font-semibold">Status</th></tr></thead>
                                 <tbody>
                                     {(tenants || []).filter((tenant: any) => {
-                                        if (!listSearch) return true;
+                                        if (!listSearch) {
+return true;
+}
+
                                         const q = listSearch.toLowerCase();
+
                                         return `${tenant.name} ${tenant.room_code || ''}`.toLowerCase().includes(q);
                                     }).slice(0, 5).map((tenant: any) => (
                                         <tr key={`upcoming-${tenant.room_id}`} className="border-b border-[#eee6e0] text-[#3e5262]"><td className="px-3 py-2">Room {tenant.room_code}</td><td className="px-3 py-2">{tenant.name}</td><td className="px-3 py-2">{tenant.check_out_date}</td><td className="px-3 py-2"><span className="rounded-full bg-[#f0b01f] px-2 py-0.5 text-[10px] font-semibold text-[#312400]">Soon</span></td></tr>
@@ -777,7 +860,19 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
                             <label className="text-xs text-[#4f6271]">
                                 Check-in Date
                                 <div className="mt-1 flex items-center gap-2">
-                                    <input ref={checkInInputRef} type="date" min={todayText} value={checkInDate} onClick={() => { const el = checkInInputRef.current as any; if (el && typeof el.showPicker === 'function') { el.showPicker(); } }} onFocus={() => { const el = checkInInputRef.current as any; if (el && typeof el.showPicker === 'function') { el.showPicker(); } }} onChange={(e) => setCheckInDate(e.target.value)} className="relative z-10 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none" />
+                                    <input ref={checkInInputRef} type="date" min={todayText} value={checkInDate} onClick={() => {
+ const el = checkInInputRef.current as any;
+
+ if (el && typeof el.showPicker === 'function') {
+ el.showPicker(); 
+} 
+}} onFocus={() => {
+ const el = checkInInputRef.current as any;
+
+ if (el && typeof el.showPicker === 'function') {
+ el.showPicker(); 
+} 
+}} onChange={(e) => setCheckInDate(e.target.value)} className="relative z-10 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none" />
                                     {/* calendar icon removed */}
                                 </div>
                                 {errors.check_in_date ? (
@@ -794,7 +889,19 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
                             <label className="text-xs text-[#4f6271]">
                                 Check-out Date (Optional)
                                 <div className="mt-1 flex items-center gap-2">
-                                    <input ref={checkOutInputRef} type="date" min={checkInDate || todayText} value={checkOutDate} onClick={() => { const el = checkOutInputRef.current as any; if (el && typeof el.showPicker === 'function') { el.showPicker(); } }} onFocus={() => { const el = checkOutInputRef.current as any; if (el && typeof el.showPicker === 'function') { el.showPicker(); } }} onChange={(e) => setCheckOutDate(e.target.value)} className="relative z-10 mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none" />
+                                    <input ref={checkOutInputRef} type="date" min={checkInDate || todayText} value={checkOutDate} onClick={() => {
+ const el = checkOutInputRef.current as any;
+
+ if (el && typeof el.showPicker === 'function') {
+ el.showPicker(); 
+} 
+}} onFocus={() => {
+ const el = checkOutInputRef.current as any;
+
+ if (el && typeof el.showPicker === 'function') {
+ el.showPicker(); 
+} 
+}} onChange={(e) => setCheckOutDate(e.target.value)} className="relative z-10 mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none" />
                                     {/* calendar icon removed */}
                                 </div>
                                 {errors.check_out_date ? (
@@ -911,7 +1018,19 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
                             <label className="text-xs text-[#4f6271]">
                                 Check-in Date
                                 <div className="mt-1 flex items-center gap-2">
-                                    <input ref={checkInInputRef} type="date" min={todayText} value={checkInDate} onClick={() => { const el = checkInInputRef.current as any; if (el && typeof el.showPicker === 'function') { el.showPicker(); } }} onFocus={() => { const el = checkInInputRef.current as any; if (el && typeof el.showPicker === 'function') { el.showPicker(); } }} onChange={(e) => setCheckInDate(e.target.value)} className="relative z-10 mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none" />
+                                    <input ref={checkInInputRef} type="date" min={todayText} value={checkInDate} onClick={() => {
+ const el = checkInInputRef.current as any;
+
+ if (el && typeof el.showPicker === 'function') {
+ el.showPicker(); 
+} 
+}} onFocus={() => {
+ const el = checkInInputRef.current as any;
+
+ if (el && typeof el.showPicker === 'function') {
+ el.showPicker(); 
+} 
+}} onChange={(e) => setCheckInDate(e.target.value)} className="relative z-10 mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none" />
                                     {/* calendar icon removed */}
                                 </div>
                                 {errors.check_in_date ? (
@@ -933,7 +1052,19 @@ export default function Reservation({ rooms, reservations = [], reservationHisto
 
                             <label className="text-xs text-[#4f6271]">
                                 Check-out Date (Optional)
-                                <input ref={checkOutInputRef} type="date" min={checkInDate || todayText} value={checkOutDate} onClick={() => { const el = checkOutInputRef.current as any; if (el && typeof el.showPicker === 'function') { el.showPicker(); } }} onFocus={() => { const el = checkOutInputRef.current as any; if (el && typeof el.showPicker === 'function') { el.showPicker(); } }} onChange={(e) => setCheckOutDate(e.target.value)} className="relative z-10 mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none" />
+                                <input ref={checkOutInputRef} type="date" min={checkInDate || todayText} value={checkOutDate} onClick={() => {
+ const el = checkOutInputRef.current as any;
+
+ if (el && typeof el.showPicker === 'function') {
+ el.showPicker(); 
+} 
+}} onFocus={() => {
+ const el = checkOutInputRef.current as any;
+
+ if (el && typeof el.showPicker === 'function') {
+ el.showPicker(); 
+} 
+}} onChange={(e) => setCheckOutDate(e.target.value)} className="relative z-10 mt-1 h-9 w-full rounded-md border border-[#dbd2c8] bg-white px-2 text-xs outline-none" />
                                 {errors.check_out_date ? (
                                     <div className="mt-1 text-xs leading-relaxed text-[#d84a4a] break-words">
                                         {errors.check_out_date}

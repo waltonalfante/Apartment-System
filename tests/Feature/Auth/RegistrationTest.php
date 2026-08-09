@@ -26,10 +26,6 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-<<<<<<< HEAD
-    $response->assertRedirect(route('auth.2fa-verify', absolute: false));
-    Mail::assertSent(TwoFactorCode::class);
-=======
     $response->assertRedirect(route('dashboard', absolute: false));
 });
 
@@ -45,5 +41,4 @@ test('registration contact number must be exactly 11 digits', function () {
 
     $response->assertRedirect(route('register'));
     $response->assertSessionHasErrors(['contact_number']);
->>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
 });

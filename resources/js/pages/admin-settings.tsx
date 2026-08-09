@@ -1,5 +1,6 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { type FormEvent, useMemo, useState } from 'react';
+import {  useMemo, useState } from 'react';
+import type {FormEvent} from 'react';
 import ApartmentLayout from '@/layouts/apartment-layout';
 
 type PageProps = {

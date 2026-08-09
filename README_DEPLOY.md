@@ -15,15 +15,9 @@ Quick steps:
      - `APP_KEY` (generate locally with `php artisan key:generate --show` and set)
      - `APP_URL` (your Render service URL or custom domain)
      - `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
-<<<<<<< HEAD
-     - Mail settings: `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
-     - `FILESYSTEM_DRIVER=s3` and corresponding `AWS_*` vars if using S3
-     - `QUEUE_CONNECTION=database` (or `redis`) and Redis vars if needed
-=======
     - Mail settings: `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME`
      - `FILESYSTEM_DRIVER=s3` and corresponding `AWS_*` vars if using S3
     - `QUEUE_CONNECTION=sync` if you do not want a queue table/worker; OTP mail is dispatched after the response
->>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db
 
 3. Deploy and run migrations from Render shell:
 
@@ -38,8 +32,6 @@ Notes:
 - The Dockerfile runs `npm run build` in the build stage and copies `public/build` into the final image.
 - The runtime uses `php-fpm` + `nginx` to serve Laravel on port 8080.
 - For zero-downtime and production scaling, consider using managed DB, S3, and external Redis.
-<<<<<<< HEAD
-=======
 
 Recommended mail settings for Render
 -----------------------------------
@@ -60,4 +52,3 @@ MAIL_FROM_NAME="The Sammie's Apartment"
 ```
 
 Use a verified sender/domain in SendGrid, then keep `QUEUE_CONNECTION=sync` unless you later add a real queue worker.
->>>>>>> b476b0527c60937ff242b7414557e1e1c22dc7db

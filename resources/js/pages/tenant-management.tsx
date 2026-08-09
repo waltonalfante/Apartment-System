@@ -366,6 +366,7 @@ export default function TenantManagement({
             setCheckoutReservation(reservation);
             setEarlyCheckInDate(todayText);
             setIsCheckoutPromptOpen(true);
+
             return;
         }
 
@@ -835,6 +836,7 @@ export default function TenantManagement({
                                 onClick={() => {
                                     if (reservationsByRoomId.get(selectedTenant.roomId)) {
                                         setIsExtendStayConfirmOpen(true);
+
                                         return;
                                     }
 

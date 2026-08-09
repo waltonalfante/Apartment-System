@@ -97,6 +97,7 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
     const calendarSlots = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
     const calendarDays = Array.from({ length: calendarSlots }, (_, index) => {
         const dayNumber = index - firstWeekday + 1;
+
         return dayNumber >= 1 && dayNumber <= daysInMonth ? dayNumber : null;
     });
     const [openReportForm, setOpenReportForm] = useState(false);
@@ -198,10 +199,12 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
     useEffect(() => {
         if (newReportTenantId === 'manual') {
             setNewReport((current) => ({ ...current, tenant: '', room: '' }));
+
             return;
         }
 
         const selected = tenants.find((t) => t.id === newReportTenantId);
+
         if (selected) {
             setNewReport((current) => ({
                 ...current,
@@ -214,6 +217,7 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
     const openAddReport = () => {
         const initialTenantId = tenants[0]?.id ?? 'manual';
         setNewReportTenantId(initialTenantId);
+
         if (initialTenantId === 'manual') {
             setNewReport({
                 repair: '',
@@ -235,6 +239,7 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
                 status: 'Ongoing',
             }));
         }
+
         setReportErrors({});
         setOpenReportForm(true);
     };
@@ -270,11 +275,15 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
 
         if (nextErrors.repair || nextErrors.tenant || nextErrors.room || nextErrors.date) {
             setEditErrors(nextErrors);
+
             return;
         }
 
         const target = reportList.find((report) => report.id === editingReportIndex);
-        if (!target) return;
+
+        if (!target) {
+return;
+}
 
         router.patch(`/maintenance/reports/${target.id}`, {
             tenant_id: editReportTenantId === 'manual' ? null : editReportTenantId,
@@ -325,6 +334,7 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
         if (nextErrors.repair || nextErrors.tenant || nextErrors.room || nextErrors.date) {
             setReportErrors(nextErrors);
             setNotice('');
+
             return;
         }
 
@@ -377,6 +387,7 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
         if (value === 'manual') {
             setTenantId('manual');
             updateReport('', '');
+
             return;
         }
 
@@ -386,6 +397,7 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
         if (!selectedTenant) {
             setTenantId('manual');
             updateReport('', '');
+
             return;
         }
 
@@ -606,12 +618,12 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
                                 Maintenance
                                 <input
                                     value={newReport.repair}
-                                    onChange={(event) =>
-                                        {
+                                    onChange={(event) => {
                                             setNewReport((current) => ({
                                                 ...current,
                                                 repair: event.target.value,
                                             }));
+
                                             if (reportErrors.repair) {
                                                 setReportErrors((current) => ({
                                                     ...current,
@@ -668,12 +680,12 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
                                 {newReportTenantId === 'manual' ? (
                                     <input
                                         value={newReport.tenant}
-                                        onChange={(event) =>
-                                            {
+                                        onChange={(event) => {
                                                 setNewReport((current) => ({
                                                     ...current,
                                                     tenant: event.target.value,
                                                 }));
+
                                                 if (reportErrors.tenant) {
                                                     setReportErrors((current) => ({
                                                         ...current,
@@ -700,15 +712,16 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
                                 Room Number
                                 <input
                                     value={newReport.room}
-                                    onChange={(event) =>
-                                        {
+                                    onChange={(event) => {
                                             if (newReportTenantId !== 'manual') {
                                                 return;
                                             }
+
                                             setNewReport((current) => ({
                                                 ...current,
                                                 room: sanitizeUnitInput(event.target.value),
                                             }));
+
                                             if (reportErrors.room) {
                                                 setReportErrors((current) => ({
                                                     ...current,
@@ -893,11 +906,11 @@ export default function Maintenance({ tenants = [] }: { tenants: TenantEntry[] }
                                 Room Number
                                 <input
                                     value={editReport.room}
-                                    onChange={(event) =>
-                                        {
+                                    onChange={(event) => {
                                             if (editReportTenantId !== 'manual') {
                                                 return;
                                             }
+
                                             setEditReport((current) => ({
                                                 ...current,
                                                 room: sanitizeUnitInput(event.target.value),
