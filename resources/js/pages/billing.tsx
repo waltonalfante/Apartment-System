@@ -337,29 +337,21 @@ export default function Billing({
 
     const historyBills = useMemo(
         () =>
-            billingHistory.map((item) => {
-                const electricity = Number(item.billing_electricity ?? 0);
-                const water = Number(item.billing_water ?? 0);
-                const total = 6000 + electricity + water;
-
-                return {
-                    id: item.id,
-                    room: `Room ${item.room_code}`,
-                    room_code: item.room_code,
-                    tenant: item.name,
-                    total: `P ${total.toLocaleString()}`,
-                    dueDate: item.billing_due_date || '-',
-                    billing_electricity: item.billing_electricity,
-                    billing_water: item.billing_water,
-                    downpayment: item.downpayment,
-                    billing_paid_amount: item.billing_paid_amount,
-                    billing_payment_method: item.billing_payment_method,
-                    billing_receipt_path: item.billing_receipt_path,
-                    payment_type: item.payment_type,
-                    gcash_number: item.gcash_number,
-                    billing_month_year: item.billing_month_year,
-                };
-            }),
+            billingHistory.map((item) => ({
+                id: item.id,
+                room_code: item.room_code,
+                name: item.name,
+                billing_due_date: item.billing_due_date ?? null,
+                billing_month_year: item.billing_month_year ?? null,
+                billing_electricity: item.billing_electricity,
+                billing_water: item.billing_water,
+                downpayment: item.downpayment,
+                billing_paid_amount: item.billing_paid_amount,
+                billing_payment_method: item.billing_payment_method,
+                billing_receipt_path: item.billing_receipt_path,
+                payment_type: item.payment_type,
+                gcash_number: item.gcash_number,
+            })),
         [billingHistory],
     );
 
@@ -371,7 +363,7 @@ export default function Billing({
         }
 
         return historyBills.filter((bill) =>
-            `${bill.tenant} ${bill.room}`.toLowerCase().includes(normalized),
+            `${bill.name} ${bill.room_code}`.toLowerCase().includes(normalized),
         );
     }, [historyBills, historySearch]);
 
@@ -822,11 +814,11 @@ export default function Billing({
                                 </thead>
                                 <tbody>
                                     {historyPageBills.map((bill) => (
-                                        <tr key={`history-${bill.room_code}-${bill.tenant}`} className="border-b border-[#eee6e0] text-[#3e5262]">
-                                            <td className="px-3 py-2">{bill.tenant}</td>
+                                        <tr key={`history-${bill.room_code}-${bill.id}`} className="border-b border-[#eee6e0] text-[#3e5262]">
+                                            <td className="px-3 py-2">{bill.name}</td>
                                             <td className="px-3 py-2">{bill.room_code}</td>
-                                            <td className="px-3 py-2">{bill.total}</td>
-                                            <td className="px-3 py-2">{bill.dueDate}</td>
+                                            <td className="px-3 py-2">P { (6000 + Number(bill.billing_electricity ?? 0) + Number(bill.billing_water ?? 0)).toLocaleString() }</td>
+                                            <td className="px-3 py-2">{bill.billing_due_date || '-'}</td>
                                             <td className="px-3 py-2">
                                                 <span className="rounded-full bg-[#2ca94e] px-2 py-0.5 text-[10px] font-semibold text-white">
                                                     Paid
