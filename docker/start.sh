@@ -52,6 +52,12 @@ fi
 mkdir -p /var/www/html/bootstrap/cache /var/www/html/storage/framework /var/www/html/storage/logs || true
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
 
+# Generate an app key if none is configured, to prevent runtime encryption/session failures
+if [ -z "$APP_KEY" ]; then
+  echo "APP_KEY missing; generating one for runtime startup"
+  php artisan key:generate --force || true
+fi
+
 # Run migrations (non-fatal)
 php artisan migrate --force || true
 php artisan config:cache || true
