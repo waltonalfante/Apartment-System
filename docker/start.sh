@@ -66,4 +66,10 @@ php artisan view:cache || true
 
 echo "=== STARTING SERVICES ==="
 php-fpm -D
+# Ensure nginx listens on the runtime PORT (Render sets $PORT).
+# Replace the hardcoded listen port in the default nginx conf with the runtime value.
+if [ -n "$PORT" ]; then
+  sed -i "s/listen 8080;/listen ${PORT};/g" /etc/nginx/http.d/default.conf || true
+fi
+
 nginx -g 'daemon off;'
