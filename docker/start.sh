@@ -60,9 +60,19 @@ fi
 
 # Run migrations (non-fatal)
 php artisan migrate --force || true
+# Clear any existing caches first to avoid stale config from earlier builds
+php artisan config:clear || true
+php artisan route:clear || true
+php artisan view:clear || true
+# Cache current configuration/routes/views for performance
 php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true
+
+# Stream Laravel logs to container stdout so Render logs include runtime exceptions
+if [ -f /var/www/html/storage/logs/laravel.log ]; then
+  tail -n 200 -f /var/www/html/storage/logs/laravel.log &
+fi
 
 echo "=== STARTING SERVICES ==="
 php-fpm -D
